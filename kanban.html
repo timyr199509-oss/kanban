@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Kanban</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #c8a96e;
+  background-image:
+    radial-gradient(ellipse at 20% 55%, rgba(155,105,45,0.45) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 15%, rgba(180,130,65,0.3) 0%, transparent 45%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Ccircle cx='1' cy='1' r='0.6' fill='rgba(0,0,0,0.06)'/%3E%3C/svg%3E");
+  display: flex; flex-direction: column;
+  -webkit-tap-highlight-color: transparent; user-select: none;
+}
+
+/* ── HEADER ── */
+header {
+  height: 50px; flex-shrink: 0;
+  background: #1a1a1a;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5); z-index: 100;
+}
+/* Title as sticky note */
+.title-sticker {
+  background: #FFFBDD;
+  padding: 3px 12px 4px;
+  border-radius: 4px 4px 5px 5px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.5);
+  position: relative;
+}
+.title-sticker::before {
+  content: '';
+  position: absolute; top: -5px; left: 50%; transform: translateX(-50%);
+  width: 9px; height: 9px;
+  background: radial-gradient(circle at 35% 35%, #e0e0e0, #888);
+  border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+.title-in {
+  background: transparent; border: none; outline: none;
+  color: rgba(0,0,0,0.75); font-size: 14px; font-weight: 800;
+  font-family: inherit; max-width: 120px;
+  border-bottom: 1px solid transparent; transition: border-color 0.15s;
+}
+.title-in:focus { border-bottom-color: rgba(0,0,0,0.3); }
+.hdr-r { display: flex; align-items: center; gap: 6px; }
+#hdr-date { font-size: 10px; color: #555; }
+.hdr-btn {
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 7px; color: #ccc; padding: 5px 9px;
+  font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap;
+}
+.hdr-btn:active { background: rgba(255,255,255,0.2); color: #fff; }
+
+/* ── LEGEND ── */
+.legend-bar {
+  height: 27px; flex-shrink: 0;
+  background: rgba(0,0,0,0.22);
+  display: flex; align-items: center; padding: 0 10px; gap: 8px;
+  overflow-x: auto; scrollbar-width: none;
+}
+.legend-bar::-webkit-scrollbar { display: none; }
+.legend-item { display: flex; align-items: center; gap: 4px; font-size: 10px; color: rgba(255,255,255,0.65); white-space: nowrap; }
+.ldot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+/* ── SECTIONS ── */
+.sections { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.section { display: flex; flex-direction: column; min-height: 0; overflow: hidden; transition: flex 0.28s ease; }
+.section.year  { flex: 0 0 38%; }
+.section.month { flex: 1; }
+.section.sec-hidden { flex: 0 0 34px !important; }
+.section.sec-hidden .board { display: none; }
+.section.sec-hidden .focus-row { display: none; }
+
+/* Section header */
+.sec-hdr {
+  height: 34px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 10px; position: relative;
+  background: rgba(0,0,0,0.2);
+}
+.sec-sticker {
+  padding: 3px 14px 4px;
+  border-radius: 4px 4px 5px 5px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.5);
+  position: relative; display: flex; align-items: center; gap: 6px;
+}
+.sec-sticker::before {
+  content: '';
+  position: absolute; top: -5px; left: 50%; transform: translateX(-50%);
+  width: 9px; height: 9px;
+  background: radial-gradient(circle at 35% 35%, #e0e0e0, #888);
+  border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.4); z-index: 2;
+}
+.sec-color-dot {
+  width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0;
+  cursor: pointer; border: 1.5px solid rgba(0,0,0,0.2); transition: transform 0.1s;
+}
+.sec-color-dot:active { transform: scale(1.25); }
+.sec-name {
+  background: transparent; border: none; outline: none;
+  font-size: 11px; font-weight: 800; color: rgba(0,0,0,0.7);
+  letter-spacing: 0.4px; text-transform: uppercase;
+  font-family: inherit; border-bottom: 1px solid transparent;
+  cursor: text; transition: border-color 0.15s; min-width: 60px; max-width: 160px;
+}
+.sec-name:focus { border-bottom-color: rgba(0,0,0,0.3); }
+.sec-toggle-btn {
+  position: absolute; right: 10px;
+  background: rgba(255,255,255,0.12); border: none; border-radius: 5px;
+  color: rgba(255,255,255,0.75); font-size: 10px; font-weight: 600;
+  padding: 2px 8px; cursor: pointer;
+}
+.sec-toggle-btn:active { background: rgba(255,255,255,0.25); }
+
+/* Resize handle */
+.resize-handle {
+  height: 8px; flex-shrink: 0; background: rgba(0,0,0,0.15);
+  cursor: ns-resize; display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+.resize-handle:hover { background: rgba(0,0,0,0.25); }
+.resize-handle::after { content: '━ ━ ━'; color: rgba(255,255,255,0.28); font-size: 6px; letter-spacing: 3px; }
+.resize-handle.hidden { display: none; }
+
+/* ── BOARD ── */
+.board {
+  flex: 1; min-height: 0;
+  display: flex; gap: 7px; padding: 10px 8px 8px;
+  overflow-x: auto; overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+@media (min-width: 700px) {
+  .board { overflow-x: hidden; }
+  .board .col { flex: 1 !important; min-width: 0 !important; }
+}
+@media (orientation: landscape) and (max-height: 500px) {
+  .legend-bar { display: none; }
+  .sec-hdr { height: 26px; }
+  .board { padding: 6px 6px 5px; gap: 5px; }
+}
+
+/* ── COLUMN ── */
+.col {
+  flex: 0 0 180px;
+  display: flex; flex-direction: column;
+  background: rgba(0,0,0,0.16);
+  border: 1px solid rgba(255,255,255,0.11);
+  border-radius: 12px; min-height: 0; overflow: hidden;
+}
+
+/* Column label as sticker */
+.col-hdr {
+  margin: 10px 10px 0; flex-shrink: 0;
+  background: #FFFBDD;
+  border-radius: 7px 7px 4px 4px;
+  padding: 8px 10px 7px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.5);
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 4px;
+  position: relative;
+}
+.col-hdr::before {
+  content: ''; position: absolute; top: -5px; left: 50%; transform: translateX(-50%);
+  width: 9px; height: 9px;
+  background: radial-gradient(circle at 35% 35%, #ddd, #888);
+  border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.35); z-index: 2;
+}
+/* Column title: textarea that wraps */
+.col-title {
+  background: transparent; border: none; outline: none;
+  font-size: 11px; font-weight: 700; color: rgba(0,0,0,0.72);
+  font-family: inherit; flex: 1; min-width: 0;
+  border-bottom: 1px solid transparent; cursor: text;
+  transition: border-color 0.15s;
+  resize: none; overflow: hidden;
+  line-height: 1.4; padding: 0;
+  word-break: break-word;
+  min-height: 16px;
+}
+.col-title:focus { border-bottom-color: rgba(0,0,0,0.28); }
+.col-cnt {
+  background: rgba(0,0,0,0.1); color: rgba(0,0,0,0.5);
+  font-size: 9px; font-weight: 700; padding: 1px 5px;
+  border-radius: 9px; flex-shrink: 0; margin-top: 1px;
+}
+
+/* ── CARDS AREA ── */
+.cards-area {
+  flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden;
+  padding: 8px 8px 4px; display: flex; flex-direction: column; gap: 9px;
+  scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.15) transparent;
+}
+.cards-area::-webkit-scrollbar { width: 2px; }
+.cards-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); }
+.cards-area.drag-over { background: rgba(255,255,255,0.07); border-radius: 8px; }
+.empty-hint { color: rgba(255,255,255,0.28); font-size: 10px; text-align: center; padding: 14px 4px; }
+.add-btn {
+  margin: 4px 8px 9px; padding: 6px; text-align: center;
+  background: rgba(255,255,255,0.07); border: 1.5px dashed rgba(255,255,255,0.2);
+  border-radius: 8px; color: rgba(255,255,255,0.45); font-size: 11px;
+  cursor: pointer; flex-shrink: 0; transition: all 0.15s;
+}
+.add-btn:active, .add-btn:hover { background: rgba(255,255,255,0.14); color: #fff; }
+
+/* ── CARD – real sticky note ── */
+.card {
+  border-radius: 2px 2px 4px 4px;
+  box-shadow: 2px 3px 8px rgba(0,0,0,0.28), 0 1px 2px rgba(0,0,0,0.15);
+  position: relative; flex-shrink: 0;
+  transform: rotate(var(--rot,0deg));
+  cursor: pointer; aspect-ratio: 1/1;
+  display: flex; flex-direction: column;
+}
+.card.dragging { opacity: 0.25; }
+/* Folded corner */
+.card::after {
+  content: ''; position: absolute; bottom: 0; right: 0;
+  width: 14px; height: 14px;
+  background: linear-gradient(225deg, rgba(0,0,0,0.13) 50%, transparent 50%);
+  border-radius: 0 0 3px 0;
+}
+.card textarea {
+  flex: 1; background: transparent; border: none; outline: none;
+  resize: none; font-size: 12px; line-height: 1.5;
+  color: rgba(0,0,0,0.75); font-family: inherit;
+  padding: 10px 10px 18px; cursor: text; user-select: text; width: 100%;
+}
+.card textarea::placeholder { color: rgba(0,0,0,0.28); }
+/* Subtle menu button */
+.card-menu-btn {
+  position: absolute; top: 4px; right: 4px;
+  background: rgba(0,0,0,0.08); border: none; border-radius: 4px;
+  color: rgba(0,0,0,0.38); font-size: 12px; font-weight: 700;
+  padding: 1px 5px; cursor: pointer; line-height: 1; z-index: 3;
+  opacity: 0; transition: opacity 0.15s;
+}
+.card:hover .card-menu-btn { opacity: 1; }
+.card-menu-btn.vis { opacity: 1; }
+.card-menu-btn:active { background: rgba(0,0,0,0.18); }
+
+/* ── CARD POPUP ── */
+#cardPopup {
+  position: fixed; z-index: 500; background: #fff;
+  border-radius: 12px; padding: 10px 12px 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3); min-width: 180px;
+  display: none;
+}
+#cardPopup.show { display: block; }
+.cp-colors { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px; }
+.cp-dot {
+  width: 22px; height: 22px; border-radius: 50%; cursor: pointer;
+  border: 2px solid transparent; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  transition: transform 0.1s;
+}
+.cp-dot:active, .cp-dot:hover { transform: scale(1.2); }
+.cp-dot.active { border-color: #333; }
+.cp-actions { display: flex; flex-direction: column; gap: 5px; }
+.cp-btn {
+  padding: 7px 10px; border: none; border-radius: 8px;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  text-align: left; background: #f5f5f5; color: #333; transition: background 0.1s;
+}
+.cp-btn:active { background: #ebebeb; }
+.cp-btn.done { color: #0a7; }
+.cp-btn.del  { color: #c00; }
+
+/* ── DONE COLUMN – PILE ── */
+.done-inner { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.pile-wrap { flex: 1; min-height: 0; padding: 10px 8px 6px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; overflow: hidden; }
+.pile-stack { position: relative; width: 100%; flex-shrink: 0; }
+.p-card { position: absolute; left: 6px; right: 6px; height: 50px; border-radius: 3px; box-shadow: 1px 2px 5px rgba(0,0,0,0.22); }
+.pile-empty { color: rgba(255,255,255,0.3); font-size: 10px; text-align: center; padding-top: 16px; }
+.pile-hint { font-size: 10px; color: rgba(255,255,255,0.38); text-align: center; flex-shrink: 0; }
+.done-list { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 8px 8px 4px; display: flex; flex-direction: column; gap: 9px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.15) transparent; }
+.done-list::-webkit-scrollbar { width: 2px; }
+.done-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); }
+.done-clps-btn { margin: 4px 8px 9px; padding: 6px; text-align: center; background: rgba(255,255,255,0.1); border: none; border-radius: 8px; color: rgba(255,255,255,0.6); font-size: 10px; cursor: pointer; flex-shrink: 0; }
+.done-clps-btn:active { background: rgba(255,255,255,0.2); }
+
+/* ── FOCUS ROW ── */
+.focus-row {
+  flex-shrink: 0; display: flex; align-items: center; gap: 12px;
+  padding: 6px 14px 10px; overflow-x: auto; scrollbar-width: none;
+  background: rgba(0,0,0,0.07);
+}
+.focus-row::-webkit-scrollbar { display: none; }
+.focus-row-label {
+  font-size: 9px; font-weight: 800; color: rgba(255,255,255,0.42);
+  text-transform: uppercase; letter-spacing: 0.9px; white-space: nowrap;
+  flex-shrink: 0;
+}
+.focus-sq {
+  width: 74px; height: 74px; flex-shrink: 0;
+  border-radius: 2px 2px 5px 5px;
+  box-shadow: 2px 4px 9px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.15);
+  position: relative; display: flex; flex-direction: column;
+  transform: rotate(var(--frot, 0deg));
+}
+.focus-sq::after {
+  content: ''; position: absolute; bottom: 0; right: 0;
+  width: 11px; height: 11px;
+  background: linear-gradient(225deg, rgba(0,0,0,0.12) 50%, transparent 50%);
+  border-radius: 0 0 4px 0;
+}
+.focus-sq::before {
+  content: ''; position: absolute; top: -5px; left: 50%; transform: translateX(-50%);
+  width: 8px; height: 8px;
+  background: radial-gradient(circle at 35% 35%, #e0e0e0, #888);
+  border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.38); z-index: 2;
+}
+.focus-sq textarea {
+  flex: 1; background: transparent; border: none; outline: none;
+  resize: none; font-size: 9.5px; line-height: 1.4;
+  color: rgba(0,0,0,0.72); font-family: inherit;
+  padding: 8px 7px 14px; cursor: text; user-select: text; width: 100%;
+}
+.focus-sq textarea::placeholder { color: rgba(0,0,0,0.3); font-style: italic; }
+.fsq-color-btn {
+  position: absolute; bottom: 3px; left: 4px;
+  width: 8px; height: 8px; border-radius: 50%;
+  border: 1.5px solid rgba(0,0,0,0.2); cursor: pointer;
+  opacity: 0.4; transition: opacity 0.12s, transform 0.1s;
+}
+.focus-sq:hover .fsq-color-btn { opacity: 1; }
+.fsq-color-btn:active { transform: scale(1.3); }
+
+/* ── UNDO TOAST ── */
+.toast { position: fixed; bottom: -90px; left: 50%; transform: translateX(-50%); background: #1a1a1a; border-radius: 13px; padding: 10px 13px 9px; min-width: 210px; max-width: calc(100vw - 24px); display: flex; flex-direction: column; gap: 7px; box-shadow: 0 4px 18px rgba(0,0,0,0.55); z-index: 300; transition: bottom 0.28s cubic-bezier(0.32,0.72,0,1); }
+.toast.show { bottom: 18px; }
+.toast-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.toast-txt { font-size: 13px; color: #ddd; }
+.toast-undo { background: #e8c84a; color: #111; border: none; border-radius: 7px; padding: 5px 12px; font-size: 12px; font-weight: 700; cursor: pointer; }
+.toast-bar { height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
+.toast-fill { height: 100%; background: #e8c84a; transform-origin: left; }
+.toast-fill.run { animation: cdown 5s linear forwards; }
+@keyframes cdown { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
+/* ── OVERLAYS ── */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.52); z-index: 200; display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+.overlay.show { opacity: 1; pointer-events: all; }
+.modal { background: #fff; border-radius: 20px 20px 0 0; padding: 18px 16px 36px; width: 100%; max-width: 480px; max-height: 85vh; overflow-y: auto; transform: translateY(100%); transition: transform 0.26s cubic-bezier(0.32,0.72,0,1); -webkit-overflow-scrolling: touch; }
+.overlay.show .modal { transform: translateY(0); }
+.m-handle { width: 32px; height: 4px; background: #e0e0e0; border-radius: 2px; margin: 0 auto 16px; }
+.modal h3 { font-size: 16px; font-weight: 700; color: #111; margin-bottom: 14px; text-align: center; }
+.mlabel { font-size: 10px; color: #888; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 5px; }
+.minput { width: 100%; padding: 10px 12px; border: 1.5px solid #e0e0e0; border-radius: 10px; font-size: 14px; color: #111; background: #f8f8f8; margin-bottom: 12px; outline: none; font-family: inherit; }
+.minput:focus { border-color: #999; background: #fff; }
+.m-actions { display: flex; gap: 8px; margin-top: 4px; }
+.btn-cancel { flex: 1; padding: 12px; background: #f0f0f0; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; color: #555; }
+.btn-ok { flex: 2; padding: 12px; background: #1a1a1a; border: none; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; color: #fff; }
+.btn-ok:active { background: #333; }
+.cgrid { display: grid; grid-template-columns: repeat(auto-fill, 42px); gap: 6px; margin-bottom: 14px; }
+.cpick { width: 42px; height: 42px; border-radius: 10px; border: 3px solid transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: rgba(0,0,0,0.45); text-align: center; line-height: 1.2; overflow: hidden; padding: 2px; transition: transform 0.1s; }
+.cpick:active { transform: scale(0.88); }
+.cpick.active { border-color: #222; transform: scale(1.06); }
+.move-opts { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.move-sec-label { font-size: 10px; color: #999; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; padding: 4px 2px 2px; }
+.move-opt { padding: 10px 12px; border: 1.5px solid #e8e8e8; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; color: #222; background: #fafafa; text-align: left; }
+.move-opt:active { background: #f0f0f0; }
+.move-opt.cur { opacity: 0.35; pointer-events: none; }
+
+/* Settings */
+.cat-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.cat-item { border-radius: 11px; border: 1.5px solid #eee; overflow: hidden; }
+.cat-row { display: flex; align-items: center; gap: 8px; background: #f7f7f7; padding: 8px 10px; }
+.cat-swatch { width: 32px; height: 32px; border-radius: 8px; border: 2px solid rgba(0,0,0,0.08); cursor: pointer; flex-shrink: 0; position: relative; transition: transform 0.1s; }
+.cat-swatch:active { transform: scale(0.9); }
+.cat-swatch-arr { position: absolute; bottom: -1px; right: -1px; font-size: 7px; background: rgba(0,0,0,0.3); color: #fff; border-radius: 3px; padding: 0 2px; }
+.cat-name { flex: 1; background: transparent; border: none; outline: none; font-size: 13px; font-weight: 600; color: #111; font-family: inherit; min-width: 0; border-bottom: 1.5px solid transparent; }
+.cat-name:focus { border-bottom-color: #aaa; }
+.cat-del { background: none; border: none; color: #ccc; font-size: 14px; cursor: pointer; padding: 3px 5px; border-radius: 5px; }
+.cat-del:hover { color: #c00; background: rgba(200,0,0,0.08); }
+.cat-pal { display: none; flex-wrap: wrap; gap: 5px; padding: 8px 10px 10px; background: #efefef; border-top: 1px solid #e0e0e0; }
+.cat-item.pal-open .cat-pal { display: flex; }
+.palcol { width: 30px; height: 30px; border-radius: 7px; border: 2px solid transparent; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.12); transition: transform 0.1s; }
+.palcol:active { transform: scale(0.87); }
+.palcol.sel { border-color: #333; transform: scale(1.1); }
+.add-cat-btn { width: 100%; padding: 10px; background: #f0f0f0; border: 1.5px dashed #ccc; border-radius: 11px; font-size: 13px; color: #777; cursor: pointer; font-weight: 600; margin-bottom: 14px; }
+.add-cat-btn:active { background: #e8e8e8; }
+.divider { height: 1px; background: #eee; margin: 12px 0; }
+
+/* Balance wheel */
+.bal-title-in { width: 100%; background: transparent; border: none; outline: none; font-size: 17px; font-weight: 800; color: #111; font-family: inherit; text-align: center; border-bottom: 2px solid transparent; transition: border-color 0.15s; margin-bottom: 12px; display: block; }
+.bal-title-in:focus { border-bottom-color: #ccc; }
+.bal-legend { display: flex; gap: 14px; justify-content: center; margin-bottom: 4px; }
+.bal-legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: #666; }
+.bal-legend-line { width: 20px; height: 3px; border-radius: 2px; }
+#balWheel { display: flex; justify-content: center; margin: 4px 0 14px; }
+#balWheel svg { width: 100%; max-width: 280px; height: auto; }
+.bal-sliders { display: flex; flex-direction: column; gap: 11px; margin-bottom: 16px; }
+.bal-row { display: flex; align-items: center; gap: 8px; }
+.bal-dot { width: 13px; height: 13px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+.bal-name { font-size: 12px; font-weight: 600; color: #333; min-width: 72px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bal-slider { flex: 1; cursor: pointer; }
+.bal-vals { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+.bal-score { font-size: 12px; font-weight: 700; color: #5580e0; min-width: 24px; text-align: right; }
+.bal-achiev { font-size: 10px; color: #2a9; min-width: 24px; text-align: right; }
+
+/* Floating palette */
+.float-pal {
+  position: fixed; z-index: 400;
+  background: #fff; border-radius: 10px;
+  padding: 8px; display: flex; flex-wrap: wrap; gap: 5px;
+  box-shadow: 0 3px 14px rgba(0,0,0,0.25);
+  display: none; max-width: 200px;
+}
+.float-pal.show { display: flex; }
+.fsp-col { width: 26px; height: 26px; border-radius: 6px; border: 2px solid transparent; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.1); transition: transform 0.1s; }
+.fsp-col:active { transform: scale(0.87); }
+.fsp-col.sel { border-color: #333; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title-sticker">
+    <input class="title-in" id="titleIn" type="text" value="Kanban" maxlength="24">
+  </div>
+  <div class="hdr-r">
+    <span id="hdr-date"></span>
+    <button class="hdr-btn" id="balBtn" onclick="openBalance()">◎ Колесо баланса</button>
+    <button class="hdr-btn" onclick="openSettings()">⚙ Категории</button>
+  </div>
+</header>
+
+<div class="legend-bar" id="legend"></div>
+
+<div class="sections" id="sections">
+  <div class="section year" id="section-year">
+    <div class="sec-hdr">
+      <div class="sec-sticker" id="sec-sticker-year">
+        <div class="sec-color-dot" id="sec-dot-year" onclick="openFloatPal('sec-year',event)"></div>
+        <input class="sec-name" id="sec-name-year" type="text" value="Канбан года" maxlength="24">
+      </div>
+      <button class="sec-toggle-btn" onclick="toggleSection('year')">▲ Скрыть</button>
+    </div>
+    <div class="focus-row" id="focus-row-year"></div>
+    <div class="board" id="board-year"></div>
+  </div>
+
+  <div class="resize-handle" id="resizeHandle"></div>
+
+  <div class="section month" id="section-month">
+    <div class="sec-hdr">
+      <div class="sec-sticker" id="sec-sticker-month">
+        <div class="sec-color-dot" id="sec-dot-month" onclick="openFloatPal('sec-month',event)"></div>
+        <input class="sec-name" id="sec-name-month" type="text" value="Канбан месяца" maxlength="24">
+      </div>
+      <button class="sec-toggle-btn" id="monthToggleBtn" onclick="toggleSection('month')">▲ Скрыть</button>
+    </div>
+    <div class="focus-row" id="focus-row-month"></div>
+    <div class="board" id="board-month"></div>
+  </div>
+</div>
+
+<!-- Card popup -->
+<div id="cardPopup">
+  <div class="cp-colors" id="cpColors"></div>
+  <div class="cp-actions">
+    <button class="cp-btn done" id="cpDone">✓ Выполнено</button>
+    <button class="cp-btn" id="cpMove">→ Переместить</button>
+    <button class="cp-btn del" id="cpDel">✕ Удалить</button>
+  </div>
+</div>
+
+<!-- Floating palette -->
+<div class="float-pal" id="floatPal"></div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <div class="toast-row">
+    <span class="toast-txt">Карточка удалена</span>
+    <button class="toast-undo" onclick="undoDelete()">Отменить</button>
+  </div>
+  <div class="toast-bar"><div class="toast-fill" id="tfill"></div></div>
+</div>
+
+<!-- MODAL: new card -->
+<div class="overlay" id="ovNew">
+  <div class="modal">
+    <div class="m-handle"></div>
+    <h3>Новая карточка</h3>
+    <div class="mlabel">Текст</div>
+    <input class="minput" id="ncText" type="text" placeholder="Что нужно сделать?">
+    <div class="mlabel">Категория</div>
+    <div class="cgrid" id="ncGrid"></div>
+    <div class="m-actions">
+      <button class="btn-cancel" onclick="closeOv('ovNew')">Отмена</button>
+      <button class="btn-ok" onclick="createCard()">Создать</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: move -->
+<div class="overlay" id="ovMove">
+  <div class="modal">
+    <div class="m-handle"></div>
+    <h3>Переместить в...</h3>
+    <div class="move-opts" id="moveOpts"></div>
+    <button class="btn-cancel" style="width:100%" onclick="closeOv('ovMove')">Отмена</button>
+  </div>
+</div>
+
+<!-- MODAL: balance wheel -->
+<div class="overlay" id="ovBalance">
+  <div class="modal">
+    <div class="m-handle"></div>
+    <input class="bal-title-in" id="balTitleIn" type="text" value="Колесо баланса" maxlength="32">
+    <div class="bal-legend">
+      <div class="bal-legend-item">
+        <div class="bal-legend-line" style="background:rgba(60,110,210,0.75)"></div>
+        Моя оценка
+      </div>
+      <div class="bal-legend-item">
+        <div class="bal-legend-line" style="background:rgba(30,160,100,0.7);border-top:2px dashed rgba(30,160,100,0.7);height:0"></div>
+        Выполнение задач
+      </div>
+    </div>
+    <div id="balWheel"></div>
+    <div class="bal-sliders" id="balSliders"></div>
+    <button class="btn-cancel" style="width:100%" onclick="closeOv('ovBalance')">Закрыть</button>
+  </div>
+</div>
+
+<!-- MODAL: settings -->
+<div class="overlay" id="ovSettings">
+  <div class="modal">
+    <div class="m-handle"></div>
+    <h3>Мои категории</h3>
+    <div class="cat-list" id="catList"></div>
+    <button class="add-cat-btn" onclick="addCat()">+ Новая категория</button>
+    <div class="divider"></div>
+    <div class="m-actions">
+      <button class="btn-cancel" onclick="closeOv('ovSettings')">Закрыть</button>
+      <button class="btn-ok" onclick="saveSettings()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ──────────────────────────────
+const SECTIONS = [
+  { id: 'year', cols: [
+    { id: 'y-main',    title: 'Канбан года',   done: false },
+    { id: 'y-todo',    title: 'Нужно сделать', done: false },
+    { id: 'y-planned', title: 'Запланировано', done: false },
+    { id: 'y-done',    title: 'Сделано',        done: true  },
+  ]},
+  { id: 'month', cols: [
+    { id: 'm-todo',    title: 'Нужно сделать',  done: false },
+    { id: 'm-planned', title: 'Запланировано',   done: false },
+    { id: 'm-exec',    title: 'Исполнитель ⚽', done: false },
+    { id: 'm-me',      title: 'Моя сторона 🏠', done: false },
+    { id: 'm-today',   title: 'Сегодня ⚡',     done: false },
+    { id: 'm-done',    title: 'Сделано',         done: true  },
+  ]},
+];
+const DONE_COLS = new Set(['y-done','m-done']);
+const DONE_OF  = { year:'y-done', month:'m-done' };
+
+const PALETTE = [
+  '#FFABAB','#FF8C8C','#FFC28C','#FFDD8C','#FFEE66','#CCFF88',
+  '#99F5AA','#88F5D0','#88DEFF','#88BBFF','#BB99FF','#EE99EE',
+  '#FF88CC','#FFBBDD','#AAFFDD','#BBDDFF','#DDBBFF','#FFDDBB',
+  '#BBFFBB','#FFFFAA','#FFD4D4','#BBDDEE','#EECCFF','#CCCCCC',
+];
+
+const DEFAULT_CATS = [
+  { id:'cy', name:'Личное',   color:'#FFEE66' },
+  { id:'cb', name:'Бизнес',   color:'#88DEFF' },
+  { id:'cg', name:'Развитие', color:'#99F5AA' },
+  { id:'cp', name:'Семья',    color:'#FF88CC' },
+  { id:'cv', name:'Хобби',    color:'#BB99FF' },
+  { id:'co', name:'Общество', color:'#FFC28C' },
+  { id:'cr', name:'Срочное',  color:'#FF8C8C' },
+  { id:'cw', name:'Прочее',   color:'#CCCCCC' },
+];
+
+const mkFocus = () => [
+  {id:uid(),text:'',color:'#FFEE66',rot:+(Math.random()*2.4-1.2).toFixed(2)},
+  {id:uid(),text:'',color:'#88DEFF',rot:+(Math.random()*2.4-1.2).toFixed(2)},
+  {id:uid(),text:'',color:'#99F5AA',rot:+(Math.random()*2.4-1.2).toFixed(2)},
+];
+
+// ── STATE ───────────────────────────────
+let S = {
+  title: 'Kanban',
+  cards: [],
+  categories: DEFAULT_CATS.map(c=>({...c})),
+  colTitles: {},
+  doneOpen: {},
+  hidden: { year: false, month: false },
+  yearHeight: 38,
+  balanceTitle: 'Колесо баланса',
+  balanceScores: {},
+  focusStickers: { year: null, month: null },
+  secColors: { year:'#FFFBDD', month:'#FFFBDD' },
+  secNames: { year:'Канбан года', month:'Канбан месяца' },
+};
+
+let pendingDel=null, delTimer=null;
+let addCol=null, selCat=null, dragId=null;
+let editCats=[], palOpenIdx=null;
+let floatPalTarget=null, floatPalCallback=null;
+
+// ── STORAGE ──────────────────────────────
+const STORE_KEY = 'kb7';
+function save() { localStorage.setItem(STORE_KEY, JSON.stringify(S)); }
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem(STORE_KEY)||'null');
+    if (!d) return;
+    const merge = (key, def) => S[key] = (d[key] !== undefined ? d[key] : def);
+    merge('title',        'Kanban');
+    merge('cards',        []);
+    S.categories   = (d.categories && d.categories.length) ? d.categories : DEFAULT_CATS.map(c=>({...c}));
+    merge('colTitles',    {});
+    merge('doneOpen',     {});
+    merge('hidden',       {year:false,month:false});
+    merge('yearHeight',   38);
+    merge('balanceTitle', 'Колесо баланса');
+    merge('balanceScores',{});
+    merge('focusStickers',{year:null,month:null});
+    merge('secColors',    {year:'#FFFBDD',month:'#FFFBDD'});
+    merge('secNames',     {year:'Канбан года',month:'Канбан месяца'});
+  } catch(e) {}
+}
+
+// ── HELPERS ──────────────────────────────
+function uid()  { return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function rot()  { return +(Math.random()*3.2-1.6).toFixed(2); }
+function cat(id){ return S.categories.find(c=>c.id===id)||S.categories[0]||{color:'#eee',name:''}; }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function secOf(colId){ return SECTIONS.find(s=>s.cols.some(c=>c.id===colId))?.id||'month'; }
+function ensureFocus(){ if(!S.focusStickers.year)S.focusStickers.year=mkFocus(); if(!S.focusStickers.month)S.focusStickers.month=mkFocus(); }
+
+// ── COMPLETION SCORES (linked to balance wheel) ──
+// For each category: score = done_tasks / max(total_tasks, 1) * 10
+function getCompletionScores() {
+  const scores = {};
+  S.categories.forEach(c => {
+    const total = S.cards.filter(x => x.catId === c.id).length;
+    const done  = S.cards.filter(x => x.catId === c.id && DONE_COLS.has(x.col)).length;
+    scores[c.id] = total > 0 ? Math.round(done / total * 10) : 0;
+  });
+  return scores;
+}
+
+// ── RENDER ───────────────────────────────
+function render() {
+  document.getElementById('titleIn').value = S.title;
+  document.getElementById('balBtn').textContent = '◎ '+(S.balanceTitle||'Колесо баланса');
+  renderLegend();
+  applySecStates();
+  ensureFocus();
+  SECTIONS.forEach(sec => {
+    const board = document.getElementById('board-'+sec.id);
+    board.innerHTML = '';
+    sec.cols.forEach(col => board.appendChild(buildCol(col, sec.id)));
+    buildFocusRow(sec.id);
+  });
+  // Update section stickers
+  ['year','month'].forEach(sid => {
+    const st=document.getElementById('sec-sticker-'+sid);
+    if (st) st.style.background = S.secColors[sid];
+    const dt=document.getElementById('sec-dot-'+sid);
+    if (dt) dt.style.background = S.secColors[sid]==='#FFFBDD'?'rgba(0,0,0,0.15)':S.secColors[sid];
+    const nm=document.getElementById('sec-name-'+sid);
+    if (nm) nm.value = S.secNames[sid];
+  });
+}
+
+function renderLegend() {
+  const el=document.getElementById('legend'); el.innerHTML='';
+  S.categories.forEach(c=>{
+    const d=document.createElement('div'); d.className='legend-item';
+    d.innerHTML=`<div class="ldot" style="background:${c.color}"></div>${esc(c.name)}`;
+    el.appendChild(d);
+  });
+}
+
+function applySecStates() {
+  const yearEl = document.getElementById('section-year');
+  const monthEl= document.getElementById('section-month');
+  const handle = document.getElementById('resizeHandle');
+  const yearHid = S.hidden.year, monthHid = S.hidden.month;
+
+  yearEl.classList.toggle('sec-hidden', yearHid);
+  monthEl.classList.toggle('sec-hidden', monthHid);
+
+  // Toggle button labels
+  document.querySelector('#section-year .sec-toggle-btn').textContent  = yearHid  ? '▼ Показать' : '▲ Скрыть';
+  document.getElementById('monthToggleBtn').textContent                 = monthHid ? '▼ Показать' : '▲ Скрыть';
+
+  // Heights
+  if (!yearHid && !monthHid) {
+    yearEl.style.flex  = `0 0 ${S.yearHeight}%`;
+    monthEl.style.flex = '1';
+    handle.classList.remove('hidden');
+  } else if (yearHid && !monthHid) {
+    yearEl.style.flex  = '';
+    monthEl.style.flex = '1';
+    handle.classList.add('hidden');
+  } else if (!yearHid && monthHid) {
+    yearEl.style.flex  = '1';
+    monthEl.style.flex = '';
+    handle.classList.add('hidden');
+  } else {
+    handle.classList.add('hidden');
+  }
+}
+
+// ── BUILD COLUMN ──────────────────────────
+function buildCol(col, secId) {
+  const cards = S.cards.filter(c=>c.col===col.id);
+  const wrap = document.createElement('div'); wrap.className='col';
+
+  // Header sticker
+  const hdr = document.createElement('div'); hdr.className='col-hdr';
+  const ta = document.createElement('textarea'); ta.className='col-title'; ta.rows=1;
+  ta.value = S.colTitles[col.id]||col.title;
+  ta.addEventListener('mousedown', e=>e.stopPropagation());
+  ta.addEventListener('touchstart', e=>e.stopPropagation(),{passive:true});
+  ta.addEventListener('input', ()=>{ S.colTitles[col.id]=ta.value; save(); autoH(ta); });
+  setTimeout(()=>autoH(ta), 0);
+  const cnt=document.createElement('span'); cnt.className='col-cnt'; cnt.textContent=cards.length;
+  hdr.appendChild(ta); hdr.appendChild(cnt); wrap.appendChild(hdr);
+
+  if (col.done) {
+    wrap.appendChild(buildDoneInner(col.id, cards, secId));
+  } else {
+    const area=document.createElement('div'); area.className='cards-area';
+    if(cards.length===0) area.innerHTML='<div class="empty-hint">Нажми «+»</div>';
+    else cards.forEach(card=>area.appendChild(buildCard(card,secId,false)));
+    setupDrop(area,col.id); wrap.appendChild(area);
+    const ab=document.createElement('button'); ab.className='add-btn';
+    ab.textContent='+ Добавить'; ab.addEventListener('click',()=>openNew(col.id)); wrap.appendChild(ab);
+  }
+  return wrap;
+}
+
+function autoH(ta) {
+  ta.style.height='auto';
+  ta.style.height=ta.scrollHeight+'px';
+}
+
+// ── BUILD CARD ────────────────────────────
+function buildCard(card, secId, inDone) {
+  const c=cat(card.catId);
+  const el=document.createElement('div');
+  el.className='card'; el.dataset.id=card.id;
+  el.style.setProperty('--rot',(card.rot||0)+'deg');
+  el.style.background=c.color; el.draggable=!inDone;
+
+  const ta=document.createElement('textarea');
+  ta.rows=3; ta.placeholder='...'; ta.value=card.text||'';
+  ta.addEventListener('mousedown',e=>e.stopPropagation());
+  ta.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true});
+  ta.addEventListener('input',()=>{card.text=ta.value;save();});
+  el.appendChild(ta);
+
+  const mb=document.createElement('button'); mb.className='card-menu-btn'; mb.textContent='···';
+  mb.addEventListener('click',e=>{e.stopPropagation();showCardPopup(card.id,secId,inDone,mb);});
+  el.appendChild(mb);
+
+  let pressT;
+  el.addEventListener('touchstart',()=>{pressT=setTimeout(()=>{mb.classList.add('vis');showCardPopup(card.id,secId,inDone,mb);},500);},{passive:true});
+  el.addEventListener('touchend',()=>clearTimeout(pressT));
+
+  el.addEventListener('dragstart',()=>{dragId=card.id;setTimeout(()=>el.classList.add('dragging'),0);});
+  el.addEventListener('dragend',()=>{el.classList.remove('dragging');dragId=null;});
+  return el;
+}
+
+// ── CARD POPUP ────────────────────────────
+function showCardPopup(cardId,secId,inDone,anchor) {
+  const card=S.cards.find(c=>c.id===cardId); if(!card)return;
+  const popup=document.getElementById('cardPopup');
+  const cpColors=document.getElementById('cpColors'); cpColors.innerHTML='';
+  S.categories.forEach(ct=>{
+    const dot=document.createElement('div');
+    dot.className='cp-dot'+(ct.id===card.catId?' active':'');
+    dot.style.background=ct.color; dot.title=ct.name;
+    dot.addEventListener('click',()=>{
+      card.catId=ct.id;
+      const cel=document.querySelector(`.card[data-id="${cardId}"]`);
+      if(cel) cel.style.background=ct.color;
+      save(); closeCardPopup();
+    });
+    cpColors.appendChild(dot);
+  });
+  const cpDone=document.getElementById('cpDone');
+  cpDone.style.display=inDone?'none':'';
+  cpDone.onclick=()=>{ markDone(cardId,secId); closeCardPopup(); };
+  document.getElementById('cpMove').onclick=()=>{ closeCardPopup(); openMove(cardId); };
+  document.getElementById('cpDel').onclick =()=>{ closeCardPopup(); softDel(cardId); };
+  popup.style.display='block'; popup.classList.add('show');
+  const r=anchor.getBoundingClientRect(), pw=popup.offsetWidth, ph=popup.offsetHeight;
+  let left=r.right+6, top=r.top;
+  if(left+pw>window.innerWidth-8) left=r.left-pw-6;
+  if(top+ph>window.innerHeight-8) top=window.innerHeight-ph-8;
+  popup.style.left=Math.max(8,left)+'px'; popup.style.top=Math.max(8,top)+'px';
+}
+function closeCardPopup(){ const p=document.getElementById('cardPopup'); p.classList.remove('show'); p.style.display='none'; }
+document.addEventListener('click',e=>{ const p=document.getElementById('cardPopup'); if(p.classList.contains('show')&&!p.contains(e.target))closeCardPopup(); });
+
+// ── FOCUS ROW ────────────────────────────
+function buildFocusRow(secId) {
+  const stickers=S.focusStickers[secId];
+  const row=document.getElementById('focus-row-'+secId); if(!row)return; row.innerHTML='';
+  const lbl=document.createElement('div'); lbl.className='focus-row-label'; lbl.textContent='★ Фокус';
+  row.appendChild(lbl);
+  stickers.forEach(stk=>{
+    const s=document.createElement('div'); s.className='focus-sq'; s.style.background=stk.color;
+    s.style.setProperty('--frot',(stk.rot||0)+'deg');
+    const ta=document.createElement('textarea'); ta.placeholder='Цель...'; ta.value=stk.text;
+    ta.addEventListener('mousedown',e=>e.stopPropagation());
+    ta.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true});
+    ta.addEventListener('input',()=>{stk.text=ta.value;save();});
+    s.appendChild(ta);
+    const cb=document.createElement('div'); cb.className='fsq-color-btn'; cb.style.background=stk.color;
+    cb.addEventListener('click',e=>{e.stopPropagation();openFloatPal('focus-stk',e,hex=>{stk.color=hex;save();render();});});
+    s.appendChild(cb); row.appendChild(s);
+  });
+}
+
+// ── DONE COLUMN ──────────────────────────
+function buildDoneInner(colId,cards,secId){
+  const isOpen=!!S.doneOpen[colId]; const inner=document.createElement('div'); inner.className='done-inner';
+  if(!isOpen){
+    const pw=document.createElement('div'); pw.className='pile-wrap';
+    pw.addEventListener('click',()=>{S.doneOpen[colId]=true;save();render();});
+    if(cards.length===0){pw.innerHTML='<div class="pile-empty">Пока пусто</div>';}
+    else{
+      const vis=[...cards].reverse().slice(0,8);
+      const se=document.createElement('div'); se.className='pile-stack'; se.style.height=(vis.length*5+50)+'px';
+      vis.forEach((card,i)=>{const c=cat(card.catId);const pc=document.createElement('div');pc.className='p-card';const r=(i%3===0?-1.5:i%3===1?1.8:-0.6)*(1+i*0.25);pc.style.cssText=`background:${c.color};top:${i*5}px;transform:rotate(${r}deg);z-index:${i}`;se.appendChild(pc);});
+      pw.appendChild(se);
+      const cnt=cards.length; const hint=document.createElement('div'); hint.className='pile-hint';
+      hint.textContent=`${cnt} ${cnt===1?'задача':cnt<5?'задачи':'задач'} · нажми чтобы открыть`; pw.appendChild(hint);
+    }
+    inner.appendChild(pw);
+  } else {
+    const list=document.createElement('div'); list.className='done-list';
+    if(cards.length===0)list.innerHTML='<div class="empty-hint">Нет выполненных задач</div>';
+    else cards.forEach(card=>list.appendChild(buildCard(card,secId,true)));
+    inner.appendChild(list);
+    const cb=document.createElement('button'); cb.className='done-clps-btn'; cb.textContent='↑ Свернуть';
+    cb.addEventListener('click',()=>{S.doneOpen[colId]=false;save();render();}); inner.appendChild(cb);
+  }
+  return inner;
+}
+
+function setupDrop(area,colId){
+  area.addEventListener('dragover',e=>{e.preventDefault();area.classList.add('drag-over');});
+  area.addEventListener('dragleave',()=>area.classList.remove('drag-over'));
+  area.addEventListener('drop',e=>{e.preventDefault();area.classList.remove('drag-over');if(dragId){const c=S.cards.find(x=>x.id===dragId);if(c){c.col=colId;save();render();}}});
+}
+
+// ── ACTIONS ──────────────────────────────
+function markDone(cardId,secId){
+  const c=S.cards.find(x=>x.id===cardId);
+  if(c){c.col=DONE_OF[secId]||'m-done'; save(); render();}
+}
+
+function softDel(id){
+  clearTimeout(delTimer);
+  const idx=S.cards.findIndex(c=>c.id===id); if(idx<0)return;
+  const card=S.cards.splice(idx,1)[0]; save(); render();
+  pendingDel={card,idx};
+  const fill=document.getElementById('tfill');
+  fill.classList.remove('run'); void fill.offsetWidth; fill.classList.add('run');
+  document.getElementById('toast').classList.add('show');
+  delTimer=setTimeout(()=>{pendingDel=null;document.getElementById('toast').classList.remove('show');fill.classList.remove('run');},5000);
+}
+function undoDelete(){
+  if(!pendingDel)return; clearTimeout(delTimer);
+  const{card,idx}=pendingDel; S.cards.splice(Math.min(idx,S.cards.length),0,card);
+  pendingDel=null; save(); render();
+  document.getElementById('toast').classList.remove('show');
+  document.getElementById('tfill').classList.remove('run');
+}
+
+// ── NEW CARD ──────────────────────────────
+function openNew(colId){addCol=colId;selCat=S.categories[0]?.id;document.getElementById('ncText').value='';renderNcGrid();openOv('ovNew');setTimeout(()=>document.getElementById('ncText').focus(),300);}
+function renderNcGrid(){const g=document.getElementById('ncGrid');g.innerHTML='';S.categories.forEach(c=>{const el=document.createElement('div');el.className='cpick'+(c.id===selCat?' active':'');el.style.background=c.color;el.textContent=c.name;el.addEventListener('click',()=>{selCat=c.id;renderNcGrid();});g.appendChild(el);});}
+function createCard(){const text=document.getElementById('ncText').value.trim();S.cards.push({id:uid(),col:addCol,text,catId:selCat||S.categories[0]?.id,rot:rot(),created:Date.now()});save();render();closeOv('ovNew');}
+
+// ── MOVE ─────────────────────────────────
+function openMove(cardId){
+  const card=S.cards.find(c=>c.id===cardId);
+  const opts=document.getElementById('moveOpts'); opts.innerHTML='';
+  SECTIONS.forEach(sec=>{
+    const lbl=document.createElement('div');lbl.className='move-sec-label';lbl.textContent=S.secNames[sec.id]||sec.id;opts.appendChild(lbl);
+    sec.cols.forEach(col=>{const btn=document.createElement('button');btn.className='move-opt'+(col.id===card.col?' cur':'');btn.textContent=(S.colTitles[col.id]||col.title)+(col.id===card.col?' ← здесь':'');btn.addEventListener('click',()=>{card.col=col.id;save();render();closeOv('ovMove');});opts.appendChild(btn);});
+  });
+  openOv('ovMove');
+}
+
+// ── SECTION TOGGLE ────────────────────────
+function toggleSection(secId){
+  S.hidden[secId]=!S.hidden[secId]; save(); applySecStates();
+  // Re-render boards that became visible
+  if(!S.hidden[secId]) {
+    const board=document.getElementById('board-'+secId); board.innerHTML='';
+    SECTIONS.find(s=>s.id===secId).cols.forEach(col=>board.appendChild(buildCol(col,secId)));
+    buildFocusRow(secId);
+  }
+}
+
+// ── FLOATING PALETTE ─────────────────────
+function openFloatPal(context, e, callback) {
+  const pal=document.getElementById('floatPal'); pal.innerHTML='';
+  floatPalCallback=callback;
+  PALETTE.forEach(hex=>{
+    const p=document.createElement('div'); p.className='fsp-col'; p.style.background=hex;
+    p.addEventListener('click',()=>{
+      pal.classList.remove('show'); pal.style.display='none';
+      if(floatPalCallback)floatPalCallback(hex);
+    });
+    pal.appendChild(p);
+  });
+  pal.style.display='flex'; pal.classList.add('show');
+  const target=e.target||e.currentTarget;
+  const r=target.getBoundingClientRect();
+  pal.style.left=Math.min(r.left,window.innerWidth-210)+'px';
+  pal.style.top=(r.bottom+5)+'px';
+}
+// Context-specific openers
+function openFloatPal(context, e, callback) {
+  if(typeof context==='string' && context.startsWith('sec-')) {
+    const sid=context.replace('sec-','');
+    openPalWithCb(e, hex=>{ S.secColors[sid]=hex; save(); render(); });
+  } else if(callback) {
+    openPalWithCb(e, callback);
+  }
+}
+function openPalWithCb(e, cb) {
+  const pal=document.getElementById('floatPal'); pal.innerHTML=''; pal.style.display='flex';
+  PALETTE.forEach(hex=>{
+    const p=document.createElement('div'); p.className='fsp-col'; p.style.background=hex;
+    p.addEventListener('click',()=>{ pal.classList.remove('show'); pal.style.display='none'; cb(hex); });
+    pal.appendChild(p);
+  });
+  pal.classList.add('show');
+  const r=(e.target||e).getBoundingClientRect();
+  pal.style.left=Math.min(r.left,window.innerWidth-210)+'px';
+  pal.style.top=(r.bottom+5)+'px';
+}
+document.addEventListener('click',e=>{const pal=document.getElementById('floatPal');if(pal.classList.contains('show')&&!pal.contains(e.target))pal.classList.remove('show');});
+
+// ── SECTION NAMES ─────────────────────────
+['year','month'].forEach(sid=>{
+  document.getElementById('sec-name-'+sid).addEventListener('input',function(){S.secNames[sid]=this.value;save();});
+});
+
+// ── RESIZE HANDLE ─────────────────────────
+(()=>{
+  const handle=document.getElementById('resizeHandle');
+  let drag=false,sy=0,sh=0;
+  const onStart=e=>{drag=true;sy=e.touches?e.touches[0].clientY:e.clientY;sh=document.getElementById('section-year').getBoundingClientRect().height;e.preventDefault();};
+  const onMove=e=>{if(!drag||S.hidden.year||S.hidden.month)return;const cy=e.touches?e.touches[0].clientY:e.clientY;const totalH=document.getElementById('sections').getBoundingClientRect().height;const newH=Math.max(80,Math.min(totalH-80,sh+(cy-sy)));S.yearHeight=+(newH/totalH*100).toFixed(1);document.getElementById('section-year').style.flex=`0 0 ${S.yearHeight}%`;save();};
+  const onEnd=()=>{drag=false;};
+  handle.addEventListener('mousedown',onStart);
+  handle.addEventListener('touchstart',onStart,{passive:false});
+  document.addEventListener('mousemove',onMove);
+  document.addEventListener('touchmove',onMove,{passive:false});
+  document.addEventListener('mouseup',onEnd);
+  document.addEventListener('touchend',onEnd);
+})();
+
+// ── SETTINGS ─────────────────────────────
+function openSettings(){editCats=S.categories.map(c=>({...c}));palOpenIdx=null;renderCatList();openOv('ovSettings');}
+function renderCatList(){
+  const list=document.getElementById('catList');list.innerHTML='';
+  editCats.forEach((c,i)=>{
+    const item=document.createElement('div');item.className='cat-item'+(palOpenIdx===i?' pal-open':'');
+    const row=document.createElement('div');row.className='cat-row';
+    const sw=document.createElement('div');sw.className='cat-swatch';sw.style.background=c.color;
+    sw.innerHTML='<span class="cat-swatch-arr">▼</span>';
+    sw.addEventListener('click',()=>{palOpenIdx=palOpenIdx===i?null:i;renderCatList();});
+    const ni=document.createElement('input');ni.type='text';ni.className='cat-name';ni.value=c.name;ni.placeholder='Название';
+    ni.addEventListener('input',()=>{editCats[i].name=ni.value;});
+    const db=document.createElement('button');db.className='cat-del';db.textContent='✕';
+    db.addEventListener('click',()=>{editCats.splice(i,1);if(palOpenIdx===i)palOpenIdx=null;else if(palOpenIdx>i)palOpenIdx--;renderCatList();});
+    row.appendChild(sw);row.appendChild(ni);row.appendChild(db);item.appendChild(row);
+    const pal=document.createElement('div');pal.className='cat-pal';
+    PALETTE.forEach(hex=>{const p=document.createElement('div');p.className='palcol'+(c.color===hex?' sel':'');p.style.background=hex;p.addEventListener('click',()=>{editCats[i].color=hex;palOpenIdx=null;renderCatList();});pal.appendChild(p);});
+    item.appendChild(pal);list.appendChild(item);
+  });
+}
+function addCat(){editCats.push({id:uid(),name:'Новая',color:PALETTE[Math.floor(Math.random()*PALETTE.length)]});palOpenIdx=null;renderCatList();setTimeout(()=>{const m=document.querySelector('#ovSettings .modal');m.scrollTop=m.scrollHeight;},40);}
+function saveSettings(){S.categories=editCats.filter(c=>c.name.trim());if(!S.categories.length)S.categories=DEFAULT_CATS.map(c=>({...c}));save();render();closeOv('ovSettings');}
+
+// ── BALANCE WHEEL ────────────────────────
+function openBalance(){
+  document.getElementById('balTitleIn').value=S.balanceTitle;
+  drawWheel();renderBalSliders();openOv('ovBalance');
+}
+
+function drawWheel(){
+  const cats=S.categories,N=cats.length;
+  const container=document.getElementById('balWheel');container.innerHTML='';if(!N)return;
+  const completion=getCompletionScores();
+  const S2=280,cx=S2/2,cy=S2/2,R=95,LR=R+28;
+  const ns='http://www.w3.org/2000/svg';
+  const svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox',`0 0 ${S2} ${S2}`);
+  const ang=i=>(i*2*Math.PI/N)-Math.PI/2;
+
+  // Grid
+  for(let lv=1;lv<=5;lv++){const r=lv*R/5;const pts=cats.map((_,i)=>`${cx+r*Math.cos(ang(i))},${cy+r*Math.sin(ang(i))}`).join(' ');const poly=document.createElementNS(ns,'polygon');poly.setAttribute('points',pts);poly.setAttribute('fill',lv%2?'rgba(180,140,80,0.07)':'rgba(180,140,80,0.04)');poly.setAttribute('stroke','rgba(0,0,0,0.1)');poly.setAttribute('stroke-width','0.7');svg.appendChild(poly);}
+
+  // Spokes
+  cats.forEach((_,i)=>{const l=document.createElementNS(ns,'line');l.setAttribute('x1',cx);l.setAttribute('y1',cy);l.setAttribute('x2',cx+R*Math.cos(ang(i)));l.setAttribute('y2',cy+R*Math.sin(ang(i)));l.setAttribute('stroke','rgba(0,0,0,0.12)');l.setAttribute('stroke-width','1');svg.appendChild(l);});
+
+  // Completion polygon (green dashed) - linked to done tasks
+  const compPts=cats.map((c,i)=>{const r=(completion[c.id]||0)/10*R;return`${cx+r*Math.cos(ang(i))},${cy+r*Math.sin(ang(i))}`;}).join(' ');
+  const compPoly=document.createElementNS(ns,'polygon');compPoly.setAttribute('points',compPts);compPoly.setAttribute('fill','rgba(30,160,100,0.12)');compPoly.setAttribute('stroke','rgba(30,160,100,0.7)');compPoly.setAttribute('stroke-width','1.5');compPoly.setAttribute('stroke-dasharray','4 3');svg.appendChild(compPoly);
+
+  // Manual score polygon (blue solid)
+  const manPts=cats.map((c,i)=>{const r=(S.balanceScores[c.id]||0)/10*R;return`${cx+r*Math.cos(ang(i))},${cy+r*Math.sin(ang(i))}`;}).join(' ');
+  const manPoly=document.createElementNS(ns,'polygon');manPoly.setAttribute('points',manPts);manPoly.setAttribute('fill','rgba(80,130,230,0.2)');manPoly.setAttribute('stroke','rgba(60,110,210,0.75)');manPoly.setAttribute('stroke-width','2');manPoly.setAttribute('stroke-linejoin','round');svg.appendChild(manPoly);
+
+  // Dots + labels
+  cats.forEach((c,i)=>{
+    const a=ang(i);
+    const mr=(S.balanceScores[c.id]||0)/10*R;
+    const dot=document.createElementNS(ns,'circle');dot.setAttribute('cx',cx+mr*Math.cos(a));dot.setAttribute('cy',cy+mr*Math.sin(a));dot.setAttribute('r',mr>0?'4.5':'2.5');dot.setAttribute('fill',c.color);dot.setAttribute('stroke','#fff');dot.setAttribute('stroke-width','1.5');svg.appendChild(dot);
+    const lx=cx+LR*Math.cos(a),ly=cy+LR*Math.sin(a);
+    const txt=document.createElementNS(ns,'text');txt.setAttribute('x',lx);txt.setAttribute('y',ly);txt.setAttribute('text-anchor','middle');txt.setAttribute('dominant-baseline','middle');txt.setAttribute('font-size','8.5');txt.setAttribute('font-weight','700');txt.setAttribute('fill','rgba(0,0,0,0.65)');txt.setAttribute('font-family','-apple-system,sans-serif');txt.textContent=c.name;svg.appendChild(txt);
+  });
+  container.appendChild(svg);
+}
+
+function renderBalSliders(){
+  const container=document.getElementById('balSliders');container.innerHTML='';
+  const completion=getCompletionScores();
+  S.categories.forEach(c=>{
+    const score=S.balanceScores[c.id]||0;
+    const achiev=completion[c.id]||0;
+    const row=document.createElement('div');row.className='bal-row';
+    const dot=document.createElement('div');dot.className='bal-dot';dot.style.background=c.color;
+    const name=document.createElement('span');name.className='bal-name';name.textContent=c.name;
+    const slider=document.createElement('input');slider.type='range';slider.min=0;slider.max=10;slider.step=1;slider.value=score;slider.className='bal-slider';
+    const vals=document.createElement('div');vals.className='bal-vals';
+    const sv=document.createElement('span');sv.className='bal-score';sv.textContent=score;
+    const av=document.createElement('span');av.className='bal-achiev';av.title='Выполнение задач';av.textContent='✓'+achiev;
+    vals.appendChild(sv);vals.appendChild(av);
+    slider.addEventListener('input',()=>{S.balanceScores[c.id]=+slider.value;sv.textContent=slider.value;drawWheel();save();});
+    row.appendChild(dot);row.appendChild(name);row.appendChild(slider);row.appendChild(vals);
+    container.appendChild(row);
+  });
+}
+document.getElementById('balTitleIn').addEventListener('input',function(){S.balanceTitle=this.value;document.getElementById('balBtn').textContent='◎ '+(this.value||'Колесо баланса');save();});
+
+// ── OVERLAY UTILS ────────────────────────
+function openOv(id){document.getElementById(id).classList.add('show');}
+function closeOv(id){document.getElementById(id).classList.remove('show');}
+document.querySelectorAll('.overlay').forEach(el=>{el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('show');});});
+document.getElementById('ncText').addEventListener('keydown',e=>{if(e.key==='Enter')createCard();});
+document.getElementById('titleIn').addEventListener('input',function(){S.title=this.value;save();});
+
+// ── INIT ─────────────────────────────────
+document.getElementById('hdr-date').textContent =
+  new Date().toLocaleDateString('ru-RU',{day:'numeric',month:'short',year:'numeric'});
+load(); ensureFocus(); render();
+</script>
+</body>
+</html>
