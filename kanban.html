@@ -1063,14 +1063,13 @@ function renderLegend() {
 function applySecStates() {
   const yearEl = document.getElementById('section-year');
   const monthEl= document.getElementById('section-month');
-  const handle = document.getElementById('resizeHandle');
   const yearHid = S.hidden.year, monthHid = S.hidden.month;
 
   yearEl.classList.toggle('sec-hidden', yearHid);
   monthEl.classList.toggle('sec-hidden', monthHid);
 
   document.querySelector('#section-year .sec-toggle-btn').textContent  = yearHid  ? '▼ Показать' : '▲ Скрыть';
-  document.getElementById('monthToggleBtn').textContent                 = monthHid ? '▼ Показать' : '▲ Скрыть';
+  document.querySelector('#section-month .sec-toggle-btn').textContent = monthHid ? '▼ Показать' : '▲ Скрыть';
 
   if (!yearHid) yearEl.style.height = '';
   if (!monthHid) monthEl.style.height = '';
