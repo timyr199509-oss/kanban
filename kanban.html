@@ -162,10 +162,10 @@ header {
 
 /* ── BOARD ── */
 .board {
-  flex: 1; min-height: 0;
-  display: flex; gap: 7px; padding: 10px 8px 8px;
-  overflow-x: auto; overflow-y: hidden;
+  display: flex; gap: 7px; padding: 10px 8px 14px;
+  overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  align-items: flex-start;
 }
 @media (min-width: 700px) {
   .board { overflow-x: hidden; }
@@ -175,7 +175,6 @@ header {
   .legend-bar { display: none; }
   .sec-hdr { height: 26px; }
   .board { padding: 6px 6px 5px; gap: 5px; }
-  .section.year, .section.month { height: 260px; min-height: 180px; }
   .focus-row { padding: 4px 10px 6px; }
   .focus-sq { width: 60px; height: 60px; }
 }
