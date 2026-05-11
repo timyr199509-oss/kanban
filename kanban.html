@@ -748,7 +748,12 @@ function rot()  { return +(Math.random()*3.2-1.6).toFixed(2); }
 function cat(id){ return S.categories.find(c=>c.id===id)||S.categories[0]||{color:'#eee',name:''}; }
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function secOf(colId){ return SECTIONS.find(s=>s.cols.some(c=>c.id===colId))?.id||'month'; }
-function ensureFocus(){ if(!S.focusStickers.year)S.focusStickers.year=mkFocus(); if(!S.focusStickers.month)S.focusStickers.month=mkFocus(); }
+function ensureFocus(){ if(!S.focusStickers.month)S.focusStickers.month=mkFocus(); }
+function ensureYearFocus(){
+  if(!S.yearFocuses)S.yearFocuses=[];
+  if(!S.yearFocuses.length)S.yearFocuses=[{id:uid(),year:new Date().getFullYear(),stickers:mkFocus()}];
+  S.yearFocuses.forEach(yf=>{if(!yf.stickers||!yf.stickers.length)yf.stickers=mkFocus();});
+}
 function ensureIdentity(){ if(!S.identityStickers)S.identityStickers=mkIdentity(); }
 
 // ── COMPLETION SCORES (linked to balance wheel) ──
