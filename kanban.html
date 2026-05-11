@@ -714,6 +714,12 @@ function load() {
     merge('balanceScores',{});
     merge('focusStickers',{year:null,month:null});
     merge('identityStickers', null);
+    merge('yearFocuses',  []);
+    merge('focusArchives',[]);
+    // Migrate old focusStickers.year → yearFocuses
+    if (!S.yearFocuses.length && S.focusStickers && S.focusStickers.year) {
+      S.yearFocuses = [{id:uid(), year:new Date().getFullYear(), stickers:S.focusStickers.year}];
+    }
     merge('secColors',    {year:'#FFFBDD',month:'#FFFBDD'});
     merge('secNames',     {year:'Канбан года',month:'Канбан месяца'});
     merge('archives',     []);
