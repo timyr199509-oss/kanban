@@ -1893,6 +1893,13 @@ function toggleTracker(id){
   const el=document.getElementById('section-'+id);if(!el)return;
   el.classList.toggle('sec-hidden',S.trackersHidden[id]);
   el.querySelector('.sec-toggle-btn').textContent=S.trackersHidden[id]?'▼ Показать':'▲ Скрыть';
+  // Rebuild body when showing
+  if(!S.trackersHidden[id]){
+    if(id==='habits')buildHabitsSection();
+    else if(id==='energy')buildEnergySection();
+    else if(id==='hierarchy')buildHierarchySection();
+    else if(id==='standard')buildStandardSection();
+  }
 }
 
 // ── SUBTASKS ─────────────────────────────
