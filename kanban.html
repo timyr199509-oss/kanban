@@ -951,18 +951,34 @@ function buildYearFocusArea() {
     lbl.textContent='★ '+yf.year;
     yr.appendChild(lbl);
     yf.stickers.forEach(stk=>{
-      const s=document.createElement('div'); s.className='focus-sq'; s.style.background=stk.color;
-      s.style.setProperty('--frot',(stk.rot||0)+'deg');
+      const s=document.createElement('div'); s.className='focus-sq'+(stk.done?' done-goal':'');
+      s.style.background=stk.color; s.style.setProperty('--frot',(stk.rot||0)+'deg');
       const ta=document.createElement('textarea'); ta.placeholder='Цель...'; ta.value=stk.text;
       ta.addEventListener('mousedown',e=>e.stopPropagation());
       ta.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true});
       ta.addEventListener('input',()=>{stk.text=ta.value;save();autoH(ta);});
       setTimeout(()=>autoH(ta),0);
       s.appendChild(ta);
+      // Done toggle button
+      const db=document.createElement('button'); db.className='goal-done-btn';
+      db.textContent=stk.done?'✓':'○';
+      db.title=stk.done?'Отменить выполнение':'Отметить выполненной';
+      db.addEventListener('click',e=>{
+        e.stopPropagation(); stk.done=!stk.done; save(); buildYearFocusArea();
+      });
+      s.appendChild(db);
       const cb=document.createElement('div'); cb.className='fsq-color-btn'; cb.style.background=stk.color;
       cb.addEventListener('click',e=>{e.stopPropagation();openFloatPal('focus-stk',e,hex=>{stk.color=hex;save();cb.style.background=hex;s.style.background=hex;});});
       s.appendChild(cb); yr.appendChild(s);
     });
+    // Add new sticker button
+    const addStk=document.createElement('button'); addStk.className='yfocus-add-stk-btn';
+    addStk.textContent='+'; addStk.title='Добавить цель';
+    addStk.addEventListener('click',()=>{
+      yf.stickers.push({id:uid(),text:'',color:['#FFEE66','#88DEFF','#99F5AA','#FF88CC','#BB99FF'][yf.stickers.length%5],rot:+(Math.random()*2.4-1.2).toFixed(2)});
+      save(); buildYearFocusArea();
+    });
+    yr.appendChild(addStk);
     const closeBtn=document.createElement('button'); closeBtn.className='yfocus-close-btn';
     closeBtn.textContent='✓ Закрыть год';
     closeBtn.addEventListener('click',()=>closeYearFocus(yf.id));
