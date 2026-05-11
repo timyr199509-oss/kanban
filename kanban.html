@@ -315,6 +315,56 @@ header {
 .done-clps-btn { margin: 4px 8px 9px; padding: 6px; text-align: center; background: rgba(255,255,255,0.1); border: none; border-radius: 8px; color: rgba(255,255,255,0.6); font-size: 10px; cursor: pointer; flex-shrink: 0; }
 .done-clps-btn:active { background: rgba(255,255,255,0.2); }
 
+/* ── IDENTITY ROW ── */
+.identity-row {
+  flex-shrink: 0; display: flex; align-items: flex-start; gap: 12px;
+  padding: 6px 14px 10px; overflow-x: auto; scrollbar-width: none;
+  background: rgba(0,0,0,0.05);
+}
+.identity-row::-webkit-scrollbar { display: none; }
+.identity-row-label {
+  font-size: 9px; font-weight: 800; color: rgba(255,255,255,0.42);
+  text-transform: uppercase; letter-spacing: 0.9px; white-space: nowrap;
+  flex-shrink: 0; padding-top: 8px;
+}
+.identity-sq {
+  width: 90px; min-height: 90px; flex-shrink: 0;
+  border-radius: 2px 2px 5px 5px;
+  box-shadow: 2px 4px 9px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.15);
+  position: relative; display: flex; flex-direction: column;
+  transform: rotate(var(--irot, 0deg));
+  margin-top: 4px;
+}
+.identity-sq::after {
+  content: ''; position: absolute; bottom: 0; right: 0;
+  width: 11px; height: 11px;
+  background: linear-gradient(225deg, rgba(0,0,0,0.12) 50%, transparent 50%);
+  border-radius: 0 0 4px 0;
+}
+.identity-sq-label {
+  font-size: 8.5px; font-weight: 800; color: rgba(0,0,0,0.55);
+  text-transform: uppercase; letter-spacing: 0.3px; line-height: 1.2;
+  padding: 6px 7px 2px; flex-shrink: 0; text-align: center;
+  border-bottom: 1px solid rgba(0,0,0,0.09);
+}
+.identity-sq textarea {
+  flex: 1; background: transparent; border: none; outline: none;
+  resize: none; font-size: 9.5px; line-height: 1.4;
+  color: rgba(0,0,0,0.72); font-family: inherit;
+  padding: 5px 7px 14px; cursor: text; user-select: text; width: 100%;
+  min-height: 50px; overflow: hidden;
+}
+.identity-sq textarea::placeholder { color: rgba(0,0,0,0.3); font-style: italic; }
+.isq-color-btn {
+  position: absolute; bottom: 3px; left: 4px;
+  width: 8px; height: 8px; border-radius: 50%;
+  border: 1.5px solid rgba(0,0,0,0.2); cursor: pointer;
+  opacity: 0.4; transition: opacity 0.12s, transform 0.1s;
+}
+.identity-sq:hover .isq-color-btn { opacity: 1; }
+.isq-color-btn:active { transform: scale(1.3); }
+.section.sec-hidden .identity-row { display: none; }
+
 /* ── FOCUS ROW ── */
 .focus-row {
   flex-shrink: 0; display: flex; align-items: center; gap: 12px;
