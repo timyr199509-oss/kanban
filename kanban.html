@@ -1453,6 +1453,36 @@ function renderBalSliders(){
 }
 document.getElementById('balTitleIn').addEventListener('input',function(){S.balanceTitle=this.value;document.getElementById('balBtn').textContent='◎ '+(this.value||'Колесо баланса');save();});
 
+// ── EXPORT / IMPORT ──────────────────────
+function exportData(){
+  const json=JSON.stringify(S,null,2);
+  const blob=new Blob([json],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='kanban-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click(); URL.revokeObjectURL(a.href);
+}
+function importData(){
+  document.getElementById('importFile').value='';
+  document.getElementById('importFile').click();
+}
+function loadImport(e){
+  const file=e.target.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const d=JSON.parse(ev.target.result);
+      if(!d||typeof d!=='object'||!Array.isArray(d.cards))throw new Error('Неверный формат');
+      Object.assign(S,d);
+      save(); render();
+      showInfoToast('✓ Данные успешно загружены');
+    }catch(err){
+      alert('Ошибка загрузки файла. Убедись, что это правильный файл экспорта.');
+    }
+  };
+  reader.readAsText(file);
+}
+
 // ── OVERLAY UTILS ────────────────────────
 function openOv(id){document.getElementById(id).classList.add('show');}
 function closeOv(id){document.getElementById(id).classList.remove('show');}
