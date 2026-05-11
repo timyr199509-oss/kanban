@@ -751,13 +751,13 @@ function render() {
   applySecStates();
   ensureFocus();
   ensureIdentity();
-  buildIdentityRow();
   SECTIONS.forEach(sec => {
     const board = document.getElementById('board-'+sec.id);
     board.innerHTML = '';
     sec.cols.forEach(col => board.appendChild(buildCol(col, sec.id)));
     buildFocusRow(sec.id);
   });
+  buildIdentityRow();
   // Update section stickers
   ['year','month'].forEach(sid => {
     const st=document.getElementById('sec-sticker-'+sid);
