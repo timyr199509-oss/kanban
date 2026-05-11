@@ -1728,7 +1728,11 @@ function last7Days(){
 }
 function getStreak(hid){
   let s=0;const d=new Date();
-  for(;;){const ds=d.toISOString().slice(0,10);if(S.habitChecks[hid+'|'+ds]){s++;d.setDate(d.getDate()-1);}else break;}
+  for(;;){
+    const ds=d.toISOString().slice(0,10);
+    const v=S.habitChecks[hid+'|'+ds];
+    if(v===true||v==='done'){s++;d.setDate(d.getDate()-1);}else break;
+  }
   return s;
 }
 
