@@ -844,6 +844,14 @@ const mkWeekGoals = () => [
   {id:uid(),text:'',color:'#B5EAFF',rot:+(Math.random()*2.4-1.2).toFixed(2)},
   {id:uid(),text:'',color:'#C3F5C3',rot:+(Math.random()*2.4-1.2).toFixed(2)},
 ];
+const SB_GROUPS = [
+  { id:'kanban',    icon:'📋', label:'Канбан',           secs:['year','month'] },
+  { id:'hierarchy', icon:'🎯', label:'Иерархия целей',  secs:['hierarchy'] },
+  { id:'habits',    icon:'✅', label:'Привычки',         secs:['habits'] },
+  { id:'energy',    icon:'⚡', label:'Энергия',          secs:['energy'] },
+  { id:'standard',  icon:'⭐', label:'Стандарт жизни',  secs:['standard'] },
+];
+
 const mkHierarchyGoals = () => [
   {id:uid(),label:'🌟 Жизнь',    stickers:mkFocus()},
   {id:uid(),label:'🔭 10 лет',   stickers:mkFocus()},
