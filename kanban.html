@@ -68,9 +68,8 @@ header {
 
 /* ── SECTIONS ── */
 .sections { display: flex; flex-direction: column; }
-.section { display: flex; flex-direction: column; overflow: hidden; }
-.section.year  { height: 370px; min-height: 200px; }
-.section.month { height: 370px; min-height: 200px; }
+.section { display: flex; flex-direction: column; }
+.section.year, .section.month { height: auto; }
 .section.sec-hidden { height: 90px !important; min-height: 0 !important; overflow: hidden; }
 .section.sec-hidden .board { display: none; }
 .section.sec-hidden .focus-row { display: none; }
