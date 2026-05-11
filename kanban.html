@@ -1846,6 +1846,46 @@ function updateEnergyBars(){
   });
 }
 
+// ── HIERARCHY SECTION ────────────────────
+function buildHierarchySection(){
+  const body=document.getElementById('hierarchy-body');if(!body)return;body.innerHTML='';
+  ensureHierarchy();
+  const frow=document.createElement('div');frow.className='focus-row';
+  frow.style.background='rgba(0,0,0,0.05)';
+  S.hierarchyGoals.forEach(hg=>{
+    buildFocusStickerRow(frow,hg.label,hg.stickers);
+  });
+  body.appendChild(frow);
+}
+
+// ── STANDARD OF LIFE SECTION ─────────────
+function buildStandardSection(){
+  const body=document.getElementById('standard-body');if(!body)return;body.innerHTML='';
+  ensureStandard();
+  const row=document.createElement('div');row.className='yfocus-row';
+  row.style.cssText='padding:10px 14px 16px;gap:14px;overflow-x:auto;';
+  S.standardStickers.forEach(stk=>{
+    const c=S.categories.find(x=>x.id===stk.catId);if(!c)return;
+    const wrap=document.createElement('div');wrap.className='std-sticker-wrap';
+    const lbl=document.createElement('div');lbl.className='std-cat-lbl';
+    lbl.textContent=c.name;lbl.style.background=c.color;
+    const s=document.createElement('div');s.className='focus-sq';
+    s.style.background=stk.color;s.style.setProperty('--frot','0deg');
+    const ta=document.createElement('textarea');ta.placeholder='Мой стандарт...';ta.value=stk.text;
+    ta.addEventListener('mousedown',e=>e.stopPropagation());
+    ta.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true});
+    ta.addEventListener('input',()=>{stk.text=ta.value;save();autoH(ta);});
+    setTimeout(()=>autoH(ta),0);
+    s.appendChild(ta);
+    const cb=document.createElement('div');cb.className='fsq-color-btn';cb.style.background=stk.color;
+    cb.addEventListener('click',e=>{e.stopPropagation();openFloatPal('focus-stk',e,hex=>{stk.color=hex;save();cb.style.background=hex;s.style.background=hex;});});
+    s.appendChild(cb);
+    wrap.appendChild(lbl);wrap.appendChild(s);
+    row.appendChild(wrap);
+  });
+  body.appendChild(row);
+}
+
 // ── TOGGLE TRACKER ───────────────────────
 function toggleTracker(id){
   if(!S.trackersHidden)S.trackersHidden={};
