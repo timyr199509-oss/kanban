@@ -604,8 +604,45 @@ header {
 <div class="legend-bar" id="legend"></div>
 
 <div class="sections" id="sections">
+  <div class="section tracker-sec" id="section-hierarchy">
+    <div class="sec-hdr">
+      <button class="sec-drag-handle" title="Перетащить">⠿</button>
+      <div class="sec-sticker" id="sec-sticker-hierarchy">
+        <div class="sec-color-dot" id="sec-dot-hierarchy" onclick="openFloatPal('sec-hierarchy',event)"></div>
+        <input class="sec-name" id="sec-name-hierarchy" type="text" value="Иерархия целей" maxlength="24">
+      </div>
+      <button class="sec-toggle-btn" onclick="toggleTracker('hierarchy')">▲ Скрыть</button>
+    </div>
+    <div class="tracker-body" id="hierarchy-body"></div>
+  </div>
+
+  <div class="section tracker-sec" id="section-habits">
+    <div class="sec-hdr">
+      <button class="sec-drag-handle" title="Перетащить">⠿</button>
+      <div class="sec-sticker" id="sec-sticker-habits">
+        <div class="sec-color-dot" id="sec-dot-habits" onclick="openFloatPal('sec-habits',event)"></div>
+        <input class="sec-name" id="sec-name-habits" type="text" value="Привычки" maxlength="24">
+      </div>
+      <button class="sec-toggle-btn" onclick="toggleTracker('habits')">▲ Скрыть</button>
+    </div>
+    <div class="tracker-body" id="habits-body"></div>
+  </div>
+
+  <div class="section tracker-sec" id="section-energy">
+    <div class="sec-hdr">
+      <button class="sec-drag-handle" title="Перетащить">⠿</button>
+      <div class="sec-sticker" id="sec-sticker-energy">
+        <div class="sec-color-dot" id="sec-dot-energy" onclick="openFloatPal('sec-energy',event)"></div>
+        <input class="sec-name" id="sec-name-energy" type="text" value="Энергия" maxlength="24">
+      </div>
+      <button class="sec-toggle-btn" onclick="toggleTracker('energy')">▲ Скрыть</button>
+    </div>
+    <div class="tracker-body" id="energy-body"></div>
+  </div>
+
   <div class="section year" id="section-year">
     <div class="sec-hdr">
+      <button class="sec-drag-handle" title="Перетащить">⠿</button>
       <div class="sec-sticker" id="sec-sticker-year">
         <div class="sec-color-dot" id="sec-dot-year" onclick="openFloatPal('sec-year',event)"></div>
         <input class="sec-name" id="sec-name-year" type="text" value="Канбан года" maxlength="24">
@@ -616,32 +653,23 @@ header {
     <div class="board" id="board-year"></div>
   </div>
 
-  <div class="section tracker-sec" id="section-habits">
+  <div class="section tracker-sec" id="section-standard">
     <div class="sec-hdr">
-      <div class="sec-sticker" style="background:#CCFF88">
-        <div class="sec-color-dot" style="background:rgba(0,0,0,0.12)"></div>
-        <input class="sec-name" type="text" value="Привычки" readonly>
+      <button class="sec-drag-handle" title="Перетащить">⠿</button>
+      <div class="sec-sticker" id="sec-sticker-standard">
+        <div class="sec-color-dot" id="sec-dot-standard" onclick="openFloatPal('sec-standard',event)"></div>
+        <input class="sec-name" id="sec-name-standard" type="text" value="Стандарт жизни" maxlength="24">
       </div>
-      <button class="sec-toggle-btn" onclick="toggleTracker('habits')">▲ Скрыть</button>
+      <button class="sec-toggle-btn" onclick="toggleTracker('standard')">▲ Скрыть</button>
     </div>
-    <div class="tracker-body" id="habits-body"></div>
-  </div>
-
-  <div class="section tracker-sec" id="section-energy">
-    <div class="sec-hdr">
-      <div class="sec-sticker" style="background:#88DEFF">
-        <div class="sec-color-dot" style="background:rgba(0,0,0,0.12)"></div>
-        <input class="sec-name" type="text" value="Энергия" readonly>
-      </div>
-      <button class="sec-toggle-btn" onclick="toggleTracker('energy')">▲ Скрыть</button>
-    </div>
-    <div class="tracker-body" id="energy-body"></div>
+    <div class="tracker-body" id="standard-body"></div>
   </div>
 
   <div class="resize-handle" id="resizeHandle"></div>
 
   <div class="section month" id="section-month">
     <div class="sec-hdr">
+      <button class="sec-drag-handle" title="Перетащить">⠿</button>
       <div class="sec-sticker" id="sec-sticker-month">
         <div class="sec-color-dot" id="sec-dot-month" onclick="openFloatPal('sec-month',event)"></div>
         <input class="sec-name" id="sec-name-month" type="text" value="Канбан месяца" maxlength="24">
