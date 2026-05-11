@@ -1025,6 +1025,54 @@ function initSecDrag(){
   });
 }
 
+// ── SIDEBAR ──────────────────────────────
+function isGroupOn(g){
+  return g.secs.every(sid=>{
+    if(sid==='year'||sid==='month') return !S.hidden[sid];
+    return !(S.trackersHidden&&S.trackersHidden[sid]);
+  });
+}
+function toggleGroup(gid){
+  const g=SB_GROUPS.find(x=>x.id===gid); if(!g)return;
+  const on=isGroupOn(g);
+  g.secs.forEach(sid=>{
+    if(sid==='year'||sid==='month') S.hidden[sid]=on;
+    else { if(!S.trackersHidden)S.trackersHidden={}; S.trackersHidden[sid]=on; }
+  });
+  save(); render();
+}
+function buildSidebar(){
+  const nav=document.getElementById('sidebar'); if(!nav)return;
+  nav.innerHTML='';
+  nav.classList.toggle('sb-open',!!S.sidebarOpen);
+  // Toggle button
+  const tog=document.createElement('button'); tog.className='sb-toggle';
+  tog.title=S.sidebarOpen?'Свернуть':'Развернуть';
+  tog.innerHTML=S.sidebarOpen?'◀':'☰';
+  tog.onclick=toggleSidebar;
+  nav.appendChild(tog);
+  // Section items
+  SB_GROUPS.forEach(g=>{
+    const on=isGroupOn(g);
+    const btn=document.createElement('button');
+    btn.className='sb-item'+(on?' sb-on':'');
+    btn.title=g.label;
+    btn.onclick=()=>toggleGroup(g.id);
+    btn.innerHTML=`<span class="sb-icon">${g.icon}</span><span class="sb-lbl">${g.label}</span><span class="sb-dot"></span>`;
+    nav.appendChild(btn);
+  });
+}
+function toggleSidebar(){
+  S.sidebarOpen=!S.sidebarOpen; save();
+  document.getElementById('sidebar').classList.toggle('sb-open',S.sidebarOpen);
+  document.body.classList.toggle('sb-open',S.sidebarOpen);
+  buildSidebar();
+}
+function updateSidebarLayout(){
+  document.body.classList.toggle('sb-open',!!S.sidebarOpen);
+  const nav=document.getElementById('sidebar'); if(nav)nav.classList.toggle('sb-open',!!S.sidebarOpen);
+}
+
 function ensureYearFocus(){
   if(!S.yearFocuses)S.yearFocuses=[];
   if(!S.yearFocuses.length)S.yearFocuses=[{id:uid(),year:new Date().getFullYear(),stickers:mkFocus()}];
