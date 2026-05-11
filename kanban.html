@@ -739,6 +739,7 @@ function cat(id){ return S.categories.find(c=>c.id===id)||S.categories[0]||{colo
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function secOf(colId){ return SECTIONS.find(s=>s.cols.some(c=>c.id===colId))?.id||'month'; }
 function ensureFocus(){ if(!S.focusStickers.year)S.focusStickers.year=mkFocus(); if(!S.focusStickers.month)S.focusStickers.month=mkFocus(); }
+function ensureIdentity(){ if(!S.identityStickers)S.identityStickers=mkIdentity(); }
 
 // ── COMPLETION SCORES (linked to balance wheel) ──
 // For each category: score = done_tasks / max(total_tasks, 1) * 10
