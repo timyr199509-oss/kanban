@@ -1178,19 +1178,7 @@ function buildFocusStickerRow(rowEl, label, stickersArr) {
   const yr=document.createElement('div'); yr.className='yfocus-row';
   const lbl=document.createElement('div'); lbl.className='focus-row-label'; lbl.textContent=label;
   yr.appendChild(lbl);
-  stickersArr.forEach(stk=>{
-    const s=document.createElement('div'); s.className='focus-sq'; s.style.background=stk.color;
-    s.style.setProperty('--frot',(stk.rot||0)+'deg');
-    const ta=document.createElement('textarea'); ta.placeholder='Цель...'; ta.value=stk.text;
-    ta.addEventListener('mousedown',e=>e.stopPropagation());
-    ta.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true});
-    ta.addEventListener('input',()=>{stk.text=ta.value;save();autoH(ta);});
-    setTimeout(()=>autoH(ta),0);
-    s.appendChild(ta);
-    const cb=document.createElement('div'); cb.className='fsq-color-btn'; cb.style.background=stk.color;
-    cb.addEventListener('click',e=>{e.stopPropagation();openFloatPal('focus-stk',e,hex=>{stk.color=hex;save();cb.style.background=hex;s.style.background=hex;});});
-    s.appendChild(cb); yr.appendChild(s);
-  });
+  stickersArr.forEach(stk=>yr.appendChild(buildFocusStk(stk, stickersArr)));
   rowEl.appendChild(yr);
 }
 
