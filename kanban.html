@@ -883,7 +883,7 @@ function render() {
   document.getElementById('balBtn').textContent = '◎ '+(S.balanceTitle||'Колесо баланса');
   renderLegend();
   applySecStates();
-  ensureFocus(); ensureYearFocus(); ensureIdentity();
+  ensureFocus(); ensureWeekFocus(); ensureYearFocus(); ensureIdentity();
   SECTIONS.forEach(sec => {
     const board = document.getElementById('board-'+sec.id);
     board.innerHTML = '';
