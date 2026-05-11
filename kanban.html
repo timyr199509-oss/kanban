@@ -916,12 +916,13 @@ function closeCardPopup(){ const p=document.getElementById('cardPopup'); p.class
 document.addEventListener('click',e=>{ const p=document.getElementById('cardPopup'); if(p.classList.contains('show')&&!p.contains(e.target))closeCardPopup(); });
 document.addEventListener('scroll',()=>closeCardPopup(),true);
 
-// ── FOCUS ROW ────────────────────────────
+// ── FOCUS ROW (month) ────────────────────
 function buildFocusRow(secId) {
   const stickers=S.focusStickers[secId];
   const row=document.getElementById('focus-row-'+secId); if(!row)return; row.innerHTML='';
+  const yr=document.createElement('div'); yr.className='yfocus-row';
   const lbl=document.createElement('div'); lbl.className='focus-row-label'; lbl.textContent='★ Фокус';
-  row.appendChild(lbl);
+  yr.appendChild(lbl);
   stickers.forEach(stk=>{
     const s=document.createElement('div'); s.className='focus-sq'; s.style.background=stk.color;
     s.style.setProperty('--frot',(stk.rot||0)+'deg');
@@ -932,9 +933,61 @@ function buildFocusRow(secId) {
     setTimeout(()=>autoH(ta),0);
     s.appendChild(ta);
     const cb=document.createElement('div'); cb.className='fsq-color-btn'; cb.style.background=stk.color;
-    cb.addEventListener('click',e=>{e.stopPropagation();openFloatPal('focus-stk',e,hex=>{stk.color=hex;save();render();});});
-    s.appendChild(cb); row.appendChild(s);
+    cb.addEventListener('click',e=>{e.stopPropagation();openFloatPal('focus-stk',e,hex=>{stk.color=hex;save();cb.style.background=hex;s.style.background=hex;});});
+    s.appendChild(cb); yr.appendChild(s);
   });
+  row.appendChild(yr);
+}
+
+// ── YEAR FOCUS AREA ──────────────────────
+function buildYearFocusArea() {
+  ensureYearFocus();
+  const container=document.getElementById('focus-row-year'); if(!container)return;
+  container.innerHTML='';
+  S.yearFocuses.forEach(yf=>{
+    const yr=document.createElement('div'); yr.className='yfocus-row';
+    const lbl=document.createElement('div'); lbl.className='focus-row-label';
+    lbl.textContent='★ '+yf.year;
+    yr.appendChild(lbl);
+    yf.stickers.forEach(stk=>{
+      const s=document.createElement('div'); s.className='focus-sq'; s.style.background=stk.color;
+      s.style.setProperty('--frot',(stk.rot||0)+'deg');
+      const ta=document.createElement('textarea'); ta.placeholder='Цель...'; ta.value=stk.text;
+      ta.addEventListener('mousedown',e=>e.stopPropagation());
+      ta.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true});
+      ta.addEventListener('input',()=>{stk.text=ta.value;save();autoH(ta);});
+      setTimeout(()=>autoH(ta),0);
+      s.appendChild(ta);
+      const cb=document.createElement('div'); cb.className='fsq-color-btn'; cb.style.background=stk.color;
+      cb.addEventListener('click',e=>{e.stopPropagation();openFloatPal('focus-stk',e,hex=>{stk.color=hex;save();cb.style.background=hex;s.style.background=hex;});});
+      s.appendChild(cb); yr.appendChild(s);
+    });
+    const closeBtn=document.createElement('button'); closeBtn.className='yfocus-close-btn';
+    closeBtn.textContent='✓ Закрыть год';
+    closeBtn.addEventListener('click',()=>closeYearFocus(yf.id));
+    yr.appendChild(closeBtn);
+    container.appendChild(yr);
+  });
+  const addBtn=document.createElement('button'); addBtn.className='yfocus-add-btn';
+  addBtn.textContent='+ Добавить год';
+  addBtn.addEventListener('click',addYearFocus);
+  container.appendChild(addBtn);
+}
+function addYearFocus(){
+  ensureYearFocus();
+  const nextYear=S.yearFocuses.length?Math.max(...S.yearFocuses.map(f=>f.year))+1:new Date().getFullYear();
+  S.yearFocuses.push({id:uid(),year:nextYear,stickers:mkFocus()});
+  save(); buildYearFocusArea();
+}
+function closeYearFocus(id){
+  const idx=S.yearFocuses.findIndex(f=>f.id===id); if(idx<0)return;
+  const yf=S.yearFocuses[idx];
+  if(!confirm(`Закрыть ${yf.year} год и сохранить цели в архив?`))return;
+  if(!S.focusArchives)S.focusArchives=[];
+  S.focusArchives.unshift({...yf,closedAt:Date.now()});
+  S.yearFocuses.splice(idx,1);
+  save(); buildYearFocusArea();
+  showInfoToast(`Год ${yf.year} сохранён в архив`);
 }
 
 // ── IDENTITY GROUP (in board) ─────────────
