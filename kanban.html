@@ -832,6 +832,7 @@ function showCardPopup(cardId,secId,inDone,anchor) {
 }
 function closeCardPopup(){ const p=document.getElementById('cardPopup'); p.classList.remove('show'); p.style.display='none'; }
 document.addEventListener('click',e=>{ const p=document.getElementById('cardPopup'); if(p.classList.contains('show')&&!p.contains(e.target))closeCardPopup(); });
+document.addEventListener('scroll',()=>closeCardPopup(),true);
 
 // ── FOCUS ROW ────────────────────────────
 function buildFocusRow(secId) {
