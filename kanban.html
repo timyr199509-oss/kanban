@@ -1064,7 +1064,9 @@ function openPalWithCb(e, cb) {
   pal.style.left=Math.min(r.left,window.innerWidth-210)+'px';
   pal.style.top=(r.bottom+5)+'px';
 }
-document.addEventListener('click',e=>{const pal=document.getElementById('floatPal');if(pal.classList.contains('show')&&!pal.contains(e.target))pal.classList.remove('show');});
+function closeFloatPal(){const pal=document.getElementById('floatPal');pal.classList.remove('show');pal.style.display='none';}
+document.addEventListener('click',e=>{const pal=document.getElementById('floatPal');if(pal.classList.contains('show')&&!pal.contains(e.target))closeFloatPal();});
+document.addEventListener('scroll',()=>closeFloatPal(),true);
 
 // ── SECTION NAMES ─────────────────────────
 ['year','month'].forEach(sid=>{
