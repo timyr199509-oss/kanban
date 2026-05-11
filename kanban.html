@@ -1791,7 +1791,7 @@ document.getElementById('titleIn').addEventListener('input',function(){S.title=t
 // ── INIT ─────────────────────────────────
 document.getElementById('hdr-date').textContent =
   new Date().toLocaleDateString('ru-RU',{day:'numeric',month:'short',year:'numeric'});
-load(); ensureFocus(); render();
+load(); ensureFocus(); ensureWeekFocus(); render();
 </script>
 </body>
 </html>
