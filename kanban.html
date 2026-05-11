@@ -1425,8 +1425,9 @@ document.addEventListener('click',e=>{const pal=document.getElementById('floatPa
 document.addEventListener('scroll',()=>closeFloatPal(),true);
 
 // ── SECTION NAMES ─────────────────────────
-['year','month'].forEach(sid=>{
-  document.getElementById('sec-name-'+sid).addEventListener('input',function(){S.secNames[sid]=this.value;save();});
+['year','month','habits','energy','hierarchy','standard'].forEach(sid=>{
+  const el=document.getElementById('sec-name-'+sid);
+  if(el)el.addEventListener('input',function(){S.secNames[sid]=this.value;save();});
 });
 
 // ── RESIZE HANDLE ─────────────────────────
