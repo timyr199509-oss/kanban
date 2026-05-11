@@ -1265,8 +1265,8 @@ function renderArchiveList(){
         focus.stickers.forEach(stk=>{
           if(!stk.text)return;
           const el=document.createElement('div');
-          el.style.cssText=`background:${stk.color};padding:5px 9px;border-radius:3px 3px 6px 6px;font-size:11px;color:rgba(0,0,0,0.72);box-shadow:1px 2px 5px rgba(0,0,0,0.18);`;
-          el.textContent=stk.text;srow.appendChild(el);
+          el.style.cssText=`background:${stk.color};padding:5px 9px;border-radius:3px 3px 6px 6px;font-size:11px;color:rgba(0,0,0,0.72);box-shadow:1px 2px 5px rgba(0,0,0,0.18);${stk.done?'text-decoration:line-through;opacity:0.55;':''}`;
+          el.textContent=(stk.done?'✓ ':'')+stk.text;srow.appendChild(el);
         });
         fg.appendChild(srow);body.appendChild(fg);
       }
