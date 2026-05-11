@@ -882,6 +882,14 @@ function render() {
     if(sec.id==='year'){ buildYearFocusArea(); buildIdentityRow(); }
     else buildFocusRow(sec.id);
   });
+  // Trackers
+  buildHabitsSection(); buildEnergySection();
+  ['habits','energy'].forEach(id=>{
+    const el=document.getElementById('section-'+id);if(!el)return;
+    const hidden=S.trackersHidden&&S.trackersHidden[id];
+    el.classList.toggle('sec-hidden',!!hidden);
+    el.querySelector('.sec-toggle-btn').textContent=hidden?'▼ Показать':'▲ Скрыть';
+  });
   // Update section stickers
   ['year','month'].forEach(sid => {
     const st=document.getElementById('sec-sticker-'+sid);
