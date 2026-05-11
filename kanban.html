@@ -516,6 +516,9 @@ header {
     <button class="hdr-btn" id="balBtn" onclick="openBalance()">◎ Колесо баланса</button>
     <button class="hdr-btn" onclick="openArchive()">🗂 Архив</button>
     <button class="hdr-btn" onclick="openSettings()">⚙ Категории</button>
+    <button class="hdr-btn" onclick="exportData()">⬇ Экспорт</button>
+    <button class="hdr-btn" onclick="importData()">⬆ Импорт</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="loadImport(event)">
   </div>
 </header>
 
