@@ -491,6 +491,65 @@ header {
 .bal-score { font-size: 12px; font-weight: 700; color: #5580e0; min-width: 24px; text-align: right; }
 .bal-achiev { font-size: 10px; color: #2a9; min-width: 24px; text-align: right; }
 
+/* ── TRACKER SECTIONS ── */
+.tracker-sec.sec-hidden { height: 90px !important; min-height: 0 !important; overflow: hidden; }
+.tracker-body { padding: 10px 14px 16px; }
+
+/* Habits */
+.habits-hdr-row { display: flex; align-items: center; gap: 5px; padding: 0 10px 4px; }
+.habits-hdr-name { min-width: 130px; font-size: 9px; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.4px; flex-shrink: 0; }
+.hday-lbl { width: 28px; text-align: center; font-size: 9px; color: rgba(255,255,255,0.3); }
+.hday-lbl.today-lbl { color: rgba(255,255,255,0.7); font-weight: 700; }
+.habit-row { display: flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 8px; }
+.habit-row:hover { background: rgba(255,255,255,0.05); }
+.habit-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.habit-name-lbl { min-width: 121px; max-width: 121px; font-size: 12px; color: rgba(255,255,255,0.82); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
+.habit-days { display: flex; gap: 5px; }
+.hday { width: 28px; height: 28px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.14); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 11px; transition: all 0.15s; flex-shrink: 0; background: transparent; }
+.hday.hck { color: #fff; }
+.hday.htoday { border-color: rgba(255,255,255,0.45); border-width: 2.5px; }
+.habit-streak { font-size: 11px; font-weight: 700; color: #f39c12; min-width: 40px; text-align: right; flex-shrink: 0; }
+.habit-del-btn { background: none; border: none; color: rgba(255,255,255,0.18); font-size: 13px; cursor: pointer; padding: 2px 5px; border-radius: 4px; }
+.habit-del-btn:hover { color: #e74c3c; background: rgba(231,76,60,0.1); }
+.add-habit-area { display: flex; gap: 8px; margin-top: 10px; padding: 0 10px; }
+.add-habit-in { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.18); border-radius: 8px; padding: 7px 12px; font-size: 12px; color: #fff; outline: none; flex: 1; font-family: inherit; }
+.add-habit-in::placeholder { color: rgba(255,255,255,0.3); }
+.add-habit-btn { background: rgba(255,255,255,0.15); border: none; border-radius: 8px; color: #fff; padding: 7px 14px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.add-habit-btn:active { background: rgba(255,255,255,0.25); }
+
+/* Energy */
+.energy-content { display: flex; gap: 24px; flex-wrap: wrap; }
+.energy-today-block { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 220px; }
+.energy-block-title { font-size: 9px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+.energy-row { display: flex; align-items: center; gap: 10px; }
+.energy-emoji { font-size: 15px; width: 22px; text-align: center; flex-shrink: 0; }
+.energy-lbl { font-size: 11px; color: rgba(255,255,255,0.7); min-width: 100px; flex-shrink: 0; }
+.energy-sld { flex: 1; cursor: pointer; }
+.energy-num { font-size: 12px; font-weight: 700; color: #fff; min-width: 18px; text-align: right; }
+.energy-chart { flex: 1; min-width: 200px; }
+.energy-bars-row { display: flex; gap: 6px; align-items: flex-end; height: 60px; }
+.energy-bar-day { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 1; }
+.energy-bar-stack { display: flex; gap: 2px; align-items: flex-end; }
+.energy-bar-seg { width: 7px; border-radius: 2px 2px 0 0; min-height: 2px; transition: height 0.3s; }
+.energy-bar-lbl { font-size: 8px; color: rgba(255,255,255,0.3); }
+.energy-bar-day.e-today .energy-bar-seg { opacity: 1; }
+.energy-bar-day:not(.e-today) .energy-bar-seg { opacity: 0.45; }
+
+/* Subtasks on cards */
+.subtask-bar { height: 2px; margin: 0 10px 2px; background: rgba(0,0,0,0.1); border-radius: 1px; overflow: hidden; }
+.subtask-bar-fill { height: 100%; background: rgba(0,0,0,0.38); border-radius: 1px; transition: width 0.3s; }
+.card-subtasks { padding: 0 8px 4px; display: flex; flex-direction: column; gap: 2px; }
+.stask { display: flex; align-items: center; gap: 5px; }
+.stask-cb { width: 12px; height: 12px; border-radius: 2px; border: 1.5px solid rgba(0,0,0,0.28); cursor: pointer; flex-shrink: 0; background: transparent; display: flex; align-items: center; justify-content: center; transition: all 0.12s; }
+.stask-cb.ck { background: rgba(0,0,0,0.42); border-color: transparent; }
+.stask-cb.ck::after { content:'✓'; font-size:8px; color:#fff; line-height:1; }
+.stask-in { flex:1; background:transparent; border:none; outline:none; font-size:10px; color:rgba(0,0,0,0.68); font-family:inherit; padding:1px 0; }
+.stask-in.ck { text-decoration:line-through; color:rgba(0,0,0,0.32); }
+.stask-x { background:none; border:none; color:rgba(0,0,0,0.18); font-size:10px; cursor:pointer; padding:0 2px; line-height:1; opacity:0; }
+.stask:hover .stask-x { opacity:1; }
+.add-stask-btn { font-size:9px; color:rgba(0,0,0,0.32); background:none; border:none; cursor:pointer; padding:2px 8px 6px; text-align:left; }
+.add-stask-btn:hover { color:rgba(0,0,0,0.55); }
+
 /* Floating palette */
 .float-pal {
   position: fixed; z-index: 400;
