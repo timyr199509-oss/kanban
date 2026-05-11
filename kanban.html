@@ -1115,17 +1115,20 @@ function render() {
     el.classList.toggle('sec-hidden',!!hidden);
     el.querySelector('.sec-toggle-btn').textContent=hidden?'▼ Показать':'▲ Скрыть';
   });
-  // Update section sticker colors + names
+  // Update compact section header colors + names
   ['year','month','habits','energy','hierarchy','standard'].forEach(sid=>{
-    const st=document.getElementById('sec-sticker-'+sid);
-    if(st)st.style.background=S.secColors[sid]||'#FFFBDD';
+    const c=S.secColors[sid]||'#888';
     const dt=document.getElementById('sec-dot-'+sid);
-    if(dt){const c=S.secColors[sid]||'#FFFBDD';dt.style.background=(c==='#FFFBDD')?'rgba(0,0,0,0.15)':c;}
+    if(dt)dt.style.background=c;
+    const hdr=document.querySelector('#section-'+sid+' .sec-hdr');
+    if(hdr)hdr.style.borderLeftColor=c;
     const nm=document.getElementById('sec-name-'+sid);
     if(nm&&!nm.matches(':focus'))nm.value=S.secNames[sid]||'';
   });
   // Apply section order + init drag
   applySecOrder();
+  // Sidebar
+  buildSidebar(); updateSidebarLayout();
 }
 
 function renderLegend() {
