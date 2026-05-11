@@ -920,10 +920,7 @@ function buildFocusRow(secId) {
 // ── IDENTITY GROUP (in board) ─────────────
 function buildIdentityRow() {
   ensureIdentity();
-  const board = document.getElementById('board-year'); if(!board) return;
-  // Remove old group if any
-  const old = board.querySelector('.identity-group'); if(old) old.remove();
-  const group = document.createElement('div'); group.className='identity-group';
+  const row = document.getElementById('identity-row'); if(!row) return; row.innerHTML='';
   S.identityStickers.forEach((stk, i) => {
     const s = document.createElement('div'); s.className='identity-sq'; s.style.background=stk.color;
     s.style.setProperty('--irot',(stk.rot||0)+'deg');
@@ -939,9 +936,8 @@ function buildIdentityRow() {
     const cb = document.createElement('div'); cb.className='isq-color-btn'; cb.style.background=stk.color;
     cb.addEventListener('click',e=>{e.stopPropagation();openFloatPal('identity-stk',e,hex=>{stk.color=hex;cb.style.background=hex;s.style.background=hex;save();});});
     s.appendChild(cb);
-    group.appendChild(s);
+    row.appendChild(s);
   });
-  board.insertBefore(group, board.firstChild);
 }
 
 // ── DONE COLUMN ──────────────────────────
