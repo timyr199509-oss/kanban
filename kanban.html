@@ -129,10 +129,12 @@ header {
 
 /* ── ARCHIVE MODAL ── */
 .arch-item { border: 1.5px solid #eee; border-radius: 11px; margin-bottom: 8px; overflow: hidden; }
-.arch-hdr { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #f7f7f7; cursor: pointer; user-select: none; }
+.arch-hdr { display: flex; justify-content: space-between; align-items: center; gap: 6px; padding: 10px 14px; background: #f7f7f7; cursor: pointer; user-select: none; }
 .arch-hdr:active { background: #efefef; }
-.arch-label { font-size: 14px; font-weight: 700; color: #222; }
-.arch-count { font-size: 12px; color: #888; background: #ebebeb; padding: 2px 8px; border-radius: 10px; }
+.arch-label { font-size: 14px; font-weight: 700; color: #222; flex: 1; }
+.arch-count { font-size: 12px; color: #888; background: #ebebeb; padding: 2px 8px; border-radius: 10px; white-space: nowrap; }
+.arch-del-btn { background: none; border: none; color: #ccc; font-size: 13px; cursor: pointer; padding: 2px 4px; border-radius: 4px; line-height: 1; flex-shrink: 0; }
+.arch-del-btn:hover { color: #c00; background: rgba(200,0,0,0.08); }
 .arch-body { display: none; padding: 10px 14px 12px; border-top: 1px solid #f0f0f0; }
 .arch-item.arch-open .arch-body { display: block; }
 .arch-cat-row { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
