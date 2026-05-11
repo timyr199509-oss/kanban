@@ -151,14 +151,7 @@ header {
 .cat-limit-msg.show { display: block; }
 
 /* Resize handle */
-.resize-handle {
-  height: 8px; flex-shrink: 0; background: rgba(0,0,0,0.15);
-  cursor: ns-resize; display: flex; align-items: center; justify-content: center;
-  transition: background 0.15s;
-}
-.resize-handle:hover { background: rgba(0,0,0,0.25); }
-.resize-handle::after { content: '━ ━ ━'; color: rgba(255,255,255,0.28); font-size: 6px; letter-spacing: 3px; }
-.resize-handle.hidden { display: none; }
+.resize-handle { display: none; }
 
 /* ── BOARD ── */
 .board {
