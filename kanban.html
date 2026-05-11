@@ -1011,7 +1011,7 @@ document.addEventListener('click',e=>{const pal=document.getElementById('floatPa
   const handle=document.getElementById('resizeHandle');
   let drag=false,sy=0,sh=0;
   const onStart=e=>{drag=true;sy=e.touches?e.touches[0].clientY:e.clientY;sh=document.getElementById('section-year').getBoundingClientRect().height;e.preventDefault();};
-  const onMove=e=>{if(!drag||S.hidden.year||S.hidden.month)return;const cy=e.touches?e.touches[0].clientY:e.clientY;const totalH=document.getElementById('sections').getBoundingClientRect().height;const newH=Math.max(80,Math.min(totalH-80,sh+(cy-sy)));S.yearHeight=+(newH/totalH*100).toFixed(1);document.getElementById('section-year').style.flex=`0 0 ${S.yearHeight}%`;save();};
+  const onMove=e=>{if(!drag||S.hidden.year||S.hidden.month)return;const cy=e.touches?e.touches[0].clientY:e.clientY;const newH=Math.max(200,Math.min(800,sh+(cy-sy)));S.yearHeight=Math.round(newH);document.getElementById('section-year').style.height=newH+'px';save();};
   const onEnd=()=>{drag=false;};
   handle.addEventListener('mousedown',onStart);
   handle.addEventListener('touchstart',onStart,{passive:false});
