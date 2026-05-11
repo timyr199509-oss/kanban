@@ -753,26 +753,13 @@ function applySecStates() {
   yearEl.classList.toggle('sec-hidden', yearHid);
   monthEl.classList.toggle('sec-hidden', monthHid);
 
-  // Toggle button labels
   document.querySelector('#section-year .sec-toggle-btn').textContent  = yearHid  ? '▼ Показать' : '▲ Скрыть';
   document.getElementById('monthToggleBtn').textContent                 = monthHid ? '▼ Показать' : '▲ Скрыть';
 
-  // Heights
-  if (!yearHid && !monthHid) {
-    yearEl.style.flex  = `0 0 ${S.yearHeight}%`;
-    monthEl.style.flex = '1';
-    handle.classList.remove('hidden');
-  } else if (yearHid && !monthHid) {
-    yearEl.style.flex  = '';
-    monthEl.style.flex = '1';
-    handle.classList.add('hidden');
-  } else if (!yearHid && monthHid) {
-    yearEl.style.flex  = '1';
-    monthEl.style.flex = '';
-    handle.classList.add('hidden');
-  } else {
-    handle.classList.add('hidden');
-  }
+  if (!yearHid) yearEl.style.height = S.yearHeight + 'px';
+  if (!monthHid) monthEl.style.height = '370px';
+
+  handle.classList.toggle('hidden', yearHid || monthHid);
 }
 
 // ── BUILD COLUMN ──────────────────────────
