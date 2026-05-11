@@ -2084,6 +2084,7 @@ document.getElementById('titleIn').addEventListener('input',function(){S.title=t
 document.getElementById('hdr-date').textContent =
   new Date().toLocaleDateString('ru-RU',{day:'numeric',month:'short',year:'numeric'});
 load(); ensureFocus(); ensureWeekFocus(); ensureHierarchy(); ensureStandard(); render();
+updateSidebarLayout();
 </script>
 </body>
 </html>
