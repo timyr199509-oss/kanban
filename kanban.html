@@ -760,8 +760,8 @@ function render() {
     board.innerHTML = '';
     sec.cols.forEach(col => board.appendChild(buildCol(col, sec.id)));
     buildFocusRow(sec.id);
+    if(sec.id === 'year') buildIdentityRow();
   });
-  buildIdentityRow();
   // Update section stickers
   ['year','month'].forEach(sid => {
     const st=document.getElementById('sec-sticker-'+sid);
