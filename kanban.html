@@ -1762,12 +1762,19 @@ function buildHabitsSection(){
     const name=document.createElement('div');name.className='habit-name-lbl';name.textContent=h.name;
     const daysEl=document.createElement('div');daysEl.className='habit-days';
     days.forEach(d=>{
-      const key=h.id+'|'+d;const checked=!!S.habitChecks[key];
+      const key=h.id+'|'+d;
+      const v=S.habitChecks[key];
+      const isDone=(v===true||v==='done');
+      const isMissed=(v==='missed');
       const day=document.createElement('div');
-      day.className='hday'+(checked?' hck':'')+(d===today?' htoday':'');
-      if(checked){day.style.background=h.color;day.textContent='✓';}
+      day.className='hday'+(isDone?' hck':'')+(isMissed?' hck-miss':'')+(d===today?' htoday':'');
+      if(isDone){day.style.background=h.color;day.textContent='✓';}
+      if(isMissed){day.textContent='✗';}
       day.addEventListener('click',()=>{
-        if(S.habitChecks[key])delete S.habitChecks[key];else S.habitChecks[key]=true;
+        const cur=S.habitChecks[key];
+        if(!cur)S.habitChecks[key]='done';
+        else if(cur===true||cur==='done')S.habitChecks[key]='missed';
+        else delete S.habitChecks[key];
         save();buildHabitsSection();
       });
       daysEl.appendChild(day);
