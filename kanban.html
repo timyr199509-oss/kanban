@@ -315,13 +315,16 @@ header {
 .done-clps-btn { margin: 4px 8px 9px; padding: 6px; text-align: center; background: rgba(255,255,255,0.1); border: none; border-radius: 8px; color: rgba(255,255,255,0.6); font-size: 10px; cursor: pointer; flex-shrink: 0; }
 .done-clps-btn:active { background: rgba(255,255,255,0.2); }
 
-/* ── IDENTITY GROUP (inside board) ── */
-.identity-group {
-  flex: 0 0 100px; display: flex; flex-direction: column;
-  gap: 8px; align-self: flex-start; padding-top: 2px;
+/* ── IDENTITY ROW ── */
+.identity-row {
+  flex-shrink: 0; display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 14px 10px; overflow-x: auto; scrollbar-width: none;
+  background: rgba(0,0,0,0.07);
 }
+.identity-row::-webkit-scrollbar { display: none; }
+.section.sec-hidden .identity-row { display: none; }
 .identity-sq {
-  width: 100%; min-height: 70px; flex-shrink: 0;
+  flex: 0 0 170px; min-height: 130px;
   border-radius: 2px 2px 5px 5px;
   box-shadow: 2px 4px 9px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.15);
   position: relative; display: flex; flex-direction: column;
