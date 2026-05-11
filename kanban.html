@@ -1021,7 +1021,7 @@ function render() {
   document.getElementById('balBtn').textContent = '◎ '+(S.balanceTitle||'Колесо баланса');
   renderLegend();
   applySecStates();
-  ensureFocus(); ensureWeekFocus(); ensureYearFocus(); ensureIdentity();
+  ensureFocus(); ensureWeekFocus(); ensureYearFocus(); ensureIdentity(); ensureHierarchy(); ensureStandard();
   SECTIONS.forEach(sec => {
     const board = document.getElementById('board-'+sec.id);
     board.innerHTML = '';
@@ -1030,22 +1030,25 @@ function render() {
     else buildFocusRow(sec.id);
   });
   // Trackers
-  buildHabitsSection(); buildEnergySection();
-  ['habits','energy'].forEach(id=>{
+  buildHabitsSection(); buildEnergySection(); buildHierarchySection(); buildStandardSection();
+  const ALL_TRACKER_SECS=['habits','energy','hierarchy','standard'];
+  ALL_TRACKER_SECS.forEach(id=>{
     const el=document.getElementById('section-'+id);if(!el)return;
     const hidden=S.trackersHidden&&S.trackersHidden[id];
     el.classList.toggle('sec-hidden',!!hidden);
     el.querySelector('.sec-toggle-btn').textContent=hidden?'▼ Показать':'▲ Скрыть';
   });
-  // Update section stickers
-  ['year','month'].forEach(sid => {
+  // Update section sticker colors + names
+  ['year','month','habits','energy','hierarchy','standard'].forEach(sid=>{
     const st=document.getElementById('sec-sticker-'+sid);
-    if (st) st.style.background = S.secColors[sid];
+    if(st)st.style.background=S.secColors[sid]||'#FFFBDD';
     const dt=document.getElementById('sec-dot-'+sid);
-    if (dt) dt.style.background = S.secColors[sid]==='#FFFBDD'?'rgba(0,0,0,0.15)':S.secColors[sid];
+    if(dt){const c=S.secColors[sid]||'#FFFBDD';dt.style.background=(c==='#FFFBDD')?'rgba(0,0,0,0.15)':c;}
     const nm=document.getElementById('sec-name-'+sid);
-    if (nm) nm.value = S.secNames[sid];
+    if(nm&&!nm.matches(':focus'))nm.value=S.secNames[sid]||'';
   });
+  // Apply section order + init drag
+  applySecOrder();
 }
 
 function renderLegend() {
