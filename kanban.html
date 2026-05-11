@@ -1043,8 +1043,8 @@ function toggleSection(secId){
   if(!S.hidden[secId]) {
     const board=document.getElementById('board-'+secId); board.innerHTML='';
     SECTIONS.find(s=>s.id===secId).cols.forEach(col=>board.appendChild(buildCol(col,secId)));
-    buildFocusRow(secId);
-    if(secId==='year'){ ensureIdentity(); buildIdentityRow(); }
+    if(secId==='year'){ ensureYearFocus(); buildYearFocusArea(); ensureIdentity(); buildIdentityRow(); }
+    else buildFocusRow(secId);
   }
 }
 
