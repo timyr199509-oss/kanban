@@ -924,6 +924,32 @@ function buildFocusRow(secId) {
   });
 }
 
+// ── IDENTITY ROW ─────────────────────────
+function buildIdentityRow() {
+  ensureIdentity();
+  const stickers = S.identityStickers;
+  const row = document.getElementById('identity-row'); if(!row) return; row.innerHTML='';
+  const lbl = document.createElement('div'); lbl.className='identity-row-label'; lbl.textContent='◈ Я';
+  row.appendChild(lbl);
+  stickers.forEach((stk, i) => {
+    const s = document.createElement('div'); s.className='identity-sq'; s.style.background=stk.color;
+    s.style.setProperty('--irot',(stk.rot||0)+'deg');
+    const qlbl = document.createElement('div'); qlbl.className='identity-sq-label';
+    qlbl.textContent = IDENTITY_LABELS[i] || '';
+    s.appendChild(qlbl);
+    const ta = document.createElement('textarea'); ta.placeholder='…'; ta.value=stk.text;
+    ta.addEventListener('mousedown',e=>e.stopPropagation());
+    ta.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true});
+    ta.addEventListener('input',()=>{stk.text=ta.value;save();autoH(ta);});
+    setTimeout(()=>autoH(ta),0);
+    s.appendChild(ta);
+    const cb = document.createElement('div'); cb.className='isq-color-btn'; cb.style.background=stk.color;
+    cb.addEventListener('click',e=>{e.stopPropagation();openFloatPal('identity-stk',e,hex=>{stk.color=hex;cb.style.background=hex;s.style.background=hex;save();});});
+    s.appendChild(cb);
+    row.appendChild(s);
+  });
+}
+
 // ── DONE COLUMN ──────────────────────────
 function buildDoneInner(colId,cards,secId){
   const isOpen=!!S.doneOpen[colId]; const inner=document.createElement('div'); inner.className='done-inner';
