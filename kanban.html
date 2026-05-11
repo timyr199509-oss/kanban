@@ -891,13 +891,21 @@ function load() {
     if (!S.yearFocuses.length && S.focusStickers && S.focusStickers.year) {
       S.yearFocuses = [{id:uid(), year:new Date().getFullYear(), stickers:S.focusStickers.year}];
     }
-    merge('secColors',    {year:'#FFFBDD',month:'#FFFBDD'});
-    merge('secNames',     {year:'Канбан года',month:'Канбан месяца'});
+    const defColors={year:'#FFFBDD',month:'#FFFBDD',habits:'#CCFF88',energy:'#88DEFF',hierarchy:'#FFD9A0',standard:'#E8D5FF'};
+    S.secColors=Object.assign({},defColors,d.secColors||{});
+    const defNames={year:'Канбан года',month:'Канбан месяца',habits:'Привычки',energy:'Энергия',hierarchy:'Иерархия целей',standard:'Стандарт жизни'};
+    S.secNames=Object.assign({},defNames,d.secNames||{});
+    merge('sectionOrder', ['hierarchy','habits','energy','year','standard','month']);
+    // Ensure all section IDs exist in the order array
+    ['hierarchy','habits','energy','year','standard','month'].forEach(id=>{if(!S.sectionOrder.includes(id))S.sectionOrder.push(id);});
     merge('archives',     []);
     merge('habits',       []);
     merge('habitChecks',  {});
     merge('energyLog',    {});
-    merge('trackersHidden',{habits:false,energy:false});
+    const defHidden={habits:false,energy:false,hierarchy:false,standard:false};
+    S.trackersHidden=Object.assign({},defHidden,d.trackersHidden||{});
+    merge('hierarchyGoals', null);
+    merge('standardStickers', null);
   } catch(e) {}
 }
 
