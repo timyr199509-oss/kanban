@@ -774,14 +774,13 @@ function render() {
   document.getElementById('balBtn').textContent = '◎ '+(S.balanceTitle||'Колесо баланса');
   renderLegend();
   applySecStates();
-  ensureFocus();
-  ensureIdentity();
+  ensureFocus(); ensureYearFocus(); ensureIdentity();
   SECTIONS.forEach(sec => {
     const board = document.getElementById('board-'+sec.id);
     board.innerHTML = '';
     sec.cols.forEach(col => board.appendChild(buildCol(col, sec.id)));
-    buildFocusRow(sec.id);
-    if(sec.id === 'year') buildIdentityRow();
+    if(sec.id==='year'){ buildYearFocusArea(); buildIdentityRow(); }
+    else buildFocusRow(sec.id);
   });
   // Update section stickers
   ['year','month'].forEach(sid => {
