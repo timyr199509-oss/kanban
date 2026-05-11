@@ -924,6 +924,78 @@ function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'
 function secOf(colId){ return SECTIONS.find(s=>s.cols.some(c=>c.id===colId))?.id||'month'; }
 function ensureFocus(){ if(!S.focusStickers.month)S.focusStickers.month=mkFocus(); }
 function ensureWeekFocus(){ if(!S.weekStickers||S.weekStickers.length<4)S.weekStickers=mkWeekGoals(); }
+function ensureHierarchy(){
+  if(!S.hierarchyGoals||!S.hierarchyGoals.length)S.hierarchyGoals=mkHierarchyGoals();
+  S.hierarchyGoals.forEach(h=>{if(!h.stickers||!h.stickers.length)h.stickers=mkFocus();});
+}
+function ensureStandard(){
+  if(!S.standardStickers)S.standardStickers=mkStandardStickers();
+  // Add any new categories
+  (S.categories||[]).forEach(c=>{
+    if(!S.standardStickers.find(s=>s.catId===c.id))
+      S.standardStickers.push({id:uid(),catId:c.id,text:'',color:c.color});
+  });
+  // Remove orphaned
+  S.standardStickers=S.standardStickers.filter(s=>(S.categories||[]).find(c=>c.id===s.catId));
+}
+
+let dragSecId=null;
+function applySecOrder(){
+  const container=document.getElementById('sections');
+  const ALL_SECS=['hierarchy','habits','energy','year','standard','month'];
+  ALL_SECS.forEach(id=>{if(!S.sectionOrder.includes(id))S.sectionOrder.push(id);});
+  S.sectionOrder.forEach(sid=>{
+    const el=document.getElementById('section-'+sid);
+    if(el)container.appendChild(el);
+  });
+  const rh=document.getElementById('resizeHandle');
+  if(rh)container.appendChild(rh);
+  initSecDrag();
+}
+function initSecDrag(){
+  document.querySelectorAll('.section[id^="section-"]').forEach(el=>{
+    const sid=el.id.replace('section-','');
+    const handle=el.querySelector('.sec-drag-handle');
+    if(!handle)return;
+    // Set up handle to enable dragging
+    handle.onmousedown=()=>{ el.draggable=true; };
+    handle.ontouchstart=()=>{ el.draggable=true; };
+    el.ondragstart=e=>{
+      dragSecId=sid; el.classList.add('sec-dragging');
+      e.dataTransfer.effectAllowed='move';
+      e.dataTransfer.setData('text/plain',sid);
+    };
+    el.ondragend=()=>{
+      el.draggable=false; el.classList.remove('sec-dragging');
+      document.querySelectorAll('.sec-drag-over').forEach(x=>x.classList.remove('sec-drag-over'));
+    };
+    el.ondragover=e=>{
+      e.preventDefault(); e.dataTransfer.dropEffect='move';
+      if(dragSecId!==sid){
+        document.querySelectorAll('.sec-drag-over').forEach(x=>x.classList.remove('sec-drag-over'));
+        el.classList.add('sec-drag-over');
+      }
+    };
+    el.ondragleave=e=>{
+      if(!el.contains(e.relatedTarget))el.classList.remove('sec-drag-over');
+    };
+    el.ondrop=e=>{
+      e.preventDefault(); el.classList.remove('sec-drag-over');
+      const targetId=sid;
+      if(dragSecId&&dragSecId!==targetId){
+        const from=S.sectionOrder.indexOf(dragSecId);
+        const to=S.sectionOrder.indexOf(targetId);
+        if(from!==-1&&to!==-1){
+          S.sectionOrder.splice(from,1);
+          S.sectionOrder.splice(to,0,dragSecId);
+          save(); applySecOrder();
+        }
+      }
+      dragSecId=null;
+    };
+  });
+}
+
 function ensureYearFocus(){
   if(!S.yearFocuses)S.yearFocuses=[];
   if(!S.yearFocuses.length)S.yearFocuses=[{id:uid(),year:new Date().getFullYear(),stickers:mkFocus()}];
