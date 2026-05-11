@@ -127,6 +127,33 @@ header {
   padding: 2px 8px; cursor: pointer;
 }
 .sec-toggle-btn:active { background: rgba(255,255,255,0.25); }
+.sec-archive-btn {
+  position: absolute; right: 80px;
+  background: rgba(255,220,100,0.18); border: 1px solid rgba(255,220,100,0.3);
+  border-radius: 5px; color: rgba(255,230,130,0.9); font-size: 10px; font-weight: 600;
+  padding: 2px 8px; cursor: pointer; white-space: nowrap;
+}
+.sec-archive-btn:active { background: rgba(255,220,100,0.35); }
+
+/* ── ARCHIVE MODAL ── */
+.arch-item { border: 1.5px solid #eee; border-radius: 11px; margin-bottom: 8px; overflow: hidden; }
+.arch-hdr { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #f7f7f7; cursor: pointer; user-select: none; }
+.arch-hdr:active { background: #efefef; }
+.arch-label { font-size: 14px; font-weight: 700; color: #222; }
+.arch-count { font-size: 12px; color: #888; background: #ebebeb; padding: 2px 8px; border-radius: 10px; }
+.arch-body { display: none; padding: 10px 14px 12px; border-top: 1px solid #f0f0f0; }
+.arch-item.arch-open .arch-body { display: block; }
+.arch-cat-row { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
+.arch-cat-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.arch-cat-name { flex: 1; font-size: 12px; color: #444; }
+.arch-cat-cnt { font-size: 12px; font-weight: 700; color: #333; }
+.arch-cards { margin-top: 10px; display: flex; flex-direction: column; gap: 4px; max-height: 220px; overflow-y: auto; }
+.arch-card-item { padding: 6px 10px; background: #fafafa; border-radius: 7px; font-size: 12px; color: #333; border-left: 3px solid #ccc; line-height: 1.4; }
+.arch-empty { text-align: center; color: #bbb; padding: 24px 0; font-size: 13px; }
+
+/* ── CAT LIMIT MSG ── */
+.cat-limit-msg { font-size: 12px; color: #c00; text-align: center; padding: 6px; display: none; }
+.cat-limit-msg.show { display: block; }
 
 /* Resize handle */
 .resize-handle {
