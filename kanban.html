@@ -1542,6 +1542,179 @@ function renderBalSliders(){
 }
 document.getElementById('balTitleIn').addEventListener('input',function(){S.balanceTitle=this.value;document.getElementById('balBtn').textContent='◎ '+(this.value||'Колесо баланса');save();});
 
+// ── TRACKER HELPERS ──────────────────────
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function last7Days(){
+  const days=[];
+  for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);days.push(d.toISOString().slice(0,10));}
+  return days;
+}
+function getStreak(hid){
+  let s=0;const d=new Date();
+  for(;;){const ds=d.toISOString().slice(0,10);if(S.habitChecks[hid+'|'+ds]){s++;d.setDate(d.getDate()-1);}else break;}
+  return s;
+}
+
+// ── HABITS ───────────────────────────────
+const HABIT_COLORS=['#FFEE66','#88DEFF','#99F5AA','#FF88CC','#BB99FF','#FFC28C','#FFABAB'];
+const DAY_NAMES_SHORT=['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+
+function buildHabitsSection(){
+  const body=document.getElementById('habits-body');if(!body)return;body.innerHTML='';
+  if(!S.habits)S.habits=[];if(!S.habitChecks)S.habitChecks={};
+  const days=last7Days(),today=todayStr();
+  // Header row
+  const hdrRow=document.createElement('div');hdrRow.className='habits-hdr-row';
+  hdrRow.innerHTML='<div class="habits-hdr-name">Привычка</div>';
+  days.forEach(d=>{
+    const dn=new Date(d+'T12:00:00');
+    const lbl=document.createElement('div');
+    lbl.className='hday-lbl'+(d===today?' today-lbl':'');
+    lbl.textContent=DAY_NAMES_SHORT[dn.getDay()];
+    hdrRow.appendChild(lbl);
+  });
+  body.appendChild(hdrRow);
+  // Habits
+  S.habits.forEach(h=>{
+    const row=document.createElement('div');row.className='habit-row';
+    const dot=document.createElement('div');dot.className='habit-dot';dot.style.background=h.color;
+    const name=document.createElement('div');name.className='habit-name-lbl';name.textContent=h.name;
+    const daysEl=document.createElement('div');daysEl.className='habit-days';
+    days.forEach(d=>{
+      const key=h.id+'|'+d;const checked=!!S.habitChecks[key];
+      const day=document.createElement('div');
+      day.className='hday'+(checked?' hck':'')+(d===today?' htoday':'');
+      if(checked){day.style.background=h.color;day.textContent='✓';}
+      day.addEventListener('click',()=>{
+        if(S.habitChecks[key])delete S.habitChecks[key];else S.habitChecks[key]=true;
+        save();buildHabitsSection();
+      });
+      daysEl.appendChild(day);
+    });
+    const streak=getStreak(h.id);
+    const streakEl=document.createElement('div');streakEl.className='habit-streak';
+    streakEl.textContent=streak>0?'🔥'+streak:'';
+    const del=document.createElement('button');del.className='habit-del-btn';del.textContent='✕';
+    del.addEventListener('click',()=>{
+      if(!confirm(`Удалить привычку "${h.name}"?`))return;
+      S.habits=S.habits.filter(x=>x.id!==h.id);save();buildHabitsSection();
+    });
+    row.appendChild(dot);row.appendChild(name);row.appendChild(daysEl);row.appendChild(streakEl);row.appendChild(del);
+    body.appendChild(row);
+  });
+  // Add habit
+  const addArea=document.createElement('div');addArea.className='add-habit-area';
+  const inp=document.createElement('input');inp.type='text';inp.className='add-habit-in';inp.placeholder='Новая привычка...';
+  const btn=document.createElement('button');btn.className='add-habit-btn';btn.textContent='+ Добавить';
+  btn.addEventListener('click',()=>{
+    const name=inp.value.trim();if(!name)return;
+    S.habits.push({id:uid(),name,color:HABIT_COLORS[S.habits.length%HABIT_COLORS.length]});
+    inp.value='';save();buildHabitsSection();
+  });
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter')btn.click();});
+  addArea.appendChild(inp);addArea.appendChild(btn);body.appendChild(addArea);
+}
+
+// ── ENERGY ───────────────────────────────
+const ENERGY_TYPES=[
+  {key:'p',label:'Физическая',emoji:'💪',color:'#2ecc71'},
+  {key:'e',label:'Эмоциональная',emoji:'❤️',color:'#e74c3c'},
+  {key:'m',label:'Умственная',emoji:'🧠',color:'#3498db'},
+  {key:'s',label:'Духовная',emoji:'✨',color:'#9b59b6'},
+];
+function buildEnergySection(){
+  const body=document.getElementById('energy-body');if(!body)return;body.innerHTML='';
+  if(!S.energyLog)S.energyLog={};
+  const today=todayStr();
+  if(!S.energyLog[today])S.energyLog[today]={p:5,e:5,m:5,s:5};
+  const todayData=S.energyLog[today];
+  const content=document.createElement('div');content.className='energy-content';
+  // Sliders
+  const tb=document.createElement('div');tb.className='energy-today-block';
+  const tt=document.createElement('div');tt.className='energy-block-title';tt.textContent='Сегодня';tb.appendChild(tt);
+  ENERGY_TYPES.forEach(type=>{
+    const row=document.createElement('div');row.className='energy-row';
+    const em=document.createElement('span');em.className='energy-emoji';em.textContent=type.emoji;
+    const lb=document.createElement('span');lb.className='energy-lbl';lb.textContent=type.label;
+    const sld=document.createElement('input');sld.type='range';sld.min=1;sld.max=10;sld.step=1;
+    sld.value=todayData[type.key];sld.className='energy-sld';sld.style.accentColor=type.color;
+    const num=document.createElement('span');num.className='energy-num';num.textContent=todayData[type.key];
+    sld.addEventListener('input',()=>{todayData[type.key]=+sld.value;num.textContent=sld.value;save();updateEnergyBars();});
+    row.appendChild(em);row.appendChild(lb);row.appendChild(sld);row.appendChild(num);tb.appendChild(row);
+  });
+  content.appendChild(tb);
+  // Chart
+  const cb=document.createElement('div');cb.className='energy-chart';
+  const ct=document.createElement('div');ct.className='energy-block-title';ct.textContent='История — 7 дней';cb.appendChild(ct);
+  const barsRow=document.createElement('div');barsRow.className='energy-bars-row';barsRow.id='energy-bars';
+  cb.appendChild(barsRow);content.appendChild(cb);body.appendChild(content);
+  updateEnergyBars();
+}
+function updateEnergyBars(){
+  const barsRow=document.getElementById('energy-bars');if(!barsRow)return;barsRow.innerHTML='';
+  const days=last7Days(),today=todayStr();
+  days.forEach(d=>{
+    const data=S.energyLog[d]||{p:0,e:0,m:0,s:0};
+    const dn=new Date(d+'T12:00:00');
+    const col=document.createElement('div');col.className='energy-bar-day'+(d===today?' e-today':'');
+    const stack=document.createElement('div');stack.className='energy-bar-stack';
+    ENERGY_TYPES.forEach(type=>{
+      const bar=document.createElement('div');bar.className='energy-bar-seg';
+      bar.style.height=((data[type.key]||0)/10*46+2)+'px';bar.style.background=type.color;
+      stack.appendChild(bar);
+    });
+    const lbl=document.createElement('div');lbl.className='energy-bar-lbl';
+    lbl.textContent=DAY_NAMES_SHORT[dn.getDay()];
+    col.appendChild(stack);col.appendChild(lbl);barsRow.appendChild(col);
+  });
+}
+
+// ── TOGGLE TRACKER ───────────────────────
+function toggleTracker(id){
+  if(!S.trackersHidden)S.trackersHidden={};
+  S.trackersHidden[id]=!S.trackersHidden[id];save();
+  const el=document.getElementById('section-'+id);if(!el)return;
+  el.classList.toggle('sec-hidden',S.trackersHidden[id]);
+  el.querySelector('.sec-toggle-btn').textContent=S.trackersHidden[id]?'▼ Показать':'▲ Скрыть';
+}
+
+// ── SUBTASKS ─────────────────────────────
+function buildSubtasks(cardEl,card){
+  if(!card.subtasks)card.subtasks=[];
+  if(card.subtasks.length>0){
+    const done=card.subtasks.filter(s=>s.done).length,total=card.subtasks.length;
+    const bar=document.createElement('div');bar.className='subtask-bar';
+    const fill=document.createElement('div');fill.className='subtask-bar-fill';
+    fill.style.width=(done/total*100)+'%';bar.appendChild(fill);cardEl.appendChild(bar);
+    const list=document.createElement('div');list.className='card-subtasks';
+    card.subtasks.forEach(stask=>{
+      const item=document.createElement('div');item.className='stask';
+      const cb=document.createElement('div');cb.className='stask-cb'+(stask.done?' ck':'');
+      cb.addEventListener('click',e=>{e.stopPropagation();stask.done=!stask.done;save();refreshSubtasks(cardEl,card);});
+      const inp=document.createElement('input');inp.type='text';inp.className='stask-in'+(stask.done?' ck':'');
+      inp.value=stask.text;inp.placeholder='Подзадача...';
+      inp.addEventListener('mousedown',e=>e.stopPropagation());
+      inp.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true});
+      inp.addEventListener('input',()=>{stask.text=inp.value;save();});
+      const x=document.createElement('button');x.className='stask-x';x.textContent='✕';
+      x.addEventListener('click',e=>{e.stopPropagation();card.subtasks=card.subtasks.filter(s=>s.id!==stask.id);save();refreshSubtasks(cardEl,card);});
+      item.appendChild(cb);item.appendChild(inp);item.appendChild(x);list.appendChild(item);
+    });
+    cardEl.appendChild(list);
+  }
+  const addBtn=document.createElement('button');addBtn.className='add-stask-btn';addBtn.textContent='＋ подзадача';
+  addBtn.addEventListener('click',e=>{
+    e.stopPropagation();if(!card.subtasks)card.subtasks=[];
+    card.subtasks.push({id:uid(),text:'',done:false});save();refreshSubtasks(cardEl,card);
+    setTimeout(()=>{const ins=cardEl.querySelectorAll('.stask-in');if(ins.length)ins[ins.length-1].focus();},40);
+  });
+  cardEl.appendChild(addBtn);
+}
+function refreshSubtasks(cardEl,card){
+  cardEl.querySelectorAll('.subtask-bar,.card-subtasks,.add-stask-btn').forEach(el=>el.remove());
+  buildSubtasks(cardEl,card);
+}
+
 // ── EXPORT / IMPORT ──────────────────────
 function exportData(){
   const json=JSON.stringify(S,null,2);
