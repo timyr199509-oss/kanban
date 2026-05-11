@@ -1022,7 +1022,93 @@ document.addEventListener('click',e=>{const pal=document.getElementById('floatPa
 })();
 
 // ── SETTINGS ─────────────────────────────
-function openSettings(){editCats=S.categories.map(c=>({...c}));palOpenIdx=null;renderCatList();openOv('ovSettings');}
+function openSettings(){
+  editCats=S.categories.map(c=>({...c}));
+  palOpenIdx=null;
+  renderCatList();
+  openOv('ovSettings');
+}
+
+// ── ARCHIVE ──────────────────────────────
+const MONTHS_RU = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+
+function closeMonth(){
+  const doneCards=S.cards.filter(c=>c.col==='m-done');
+  const now=new Date();
+  const label=MONTHS_RU[now.getMonth()]+' '+now.getFullYear();
+  const msg=doneCards.length>0
+    ?`Архивировать "${label}"?\n✓ ${doneCards.length} выполненных задач будет сохранено в архив.\nНевыполненные задачи останутся на доске.`
+    :`В колонке "Сделано" нет задач.\nВсё равно создать архивную запись для "${label}"?`;
+  if(!confirm(msg))return;
+  const archive={
+    id:uid(), label, month:now.getMonth()+1, year:now.getFullYear(),
+    cards:doneCards.map(c=>({...c})),
+    categories:S.categories.map(c=>({...c})),
+    colTitles:{...S.colTitles},
+    createdAt:Date.now()
+  };
+  if(!S.archives)S.archives=[];
+  S.archives.unshift(archive);
+  S.cards=S.cards.filter(c=>c.col!=='m-done');
+  S.doneOpen['m-done']=false;
+  save();render();
+  showInfoToast(`Месяц "${label}" архивирован — ${doneCards.length} задач сохранено`);
+}
+
+function openArchive(){
+  if(!S.archives)S.archives=[];
+  renderArchiveList();
+  openOv('ovArchive');
+}
+
+function renderArchiveList(){
+  const list=document.getElementById('archiveList');
+  if(!S.archives||S.archives.length===0){
+    list.innerHTML='<div class="arch-empty">Архив пуст — закройте месяц, чтобы появилась запись</div>';return;
+  }
+  list.innerHTML='';
+  S.archives.forEach(arch=>{
+    const item=document.createElement('div');item.className='arch-item';
+    const hdr=document.createElement('div');hdr.className='arch-hdr';
+    hdr.innerHTML=`<span class="arch-label">${arch.label}</span><span class="arch-count">${arch.cards.length} задач ✓</span>`;
+    hdr.addEventListener('click',()=>item.classList.toggle('arch-open'));
+    item.appendChild(hdr);
+    const body=document.createElement('div');body.className='arch-body';
+    const cats=arch.categories||S.categories;
+    const catMap={};cats.forEach(c=>catMap[c.id]=c);
+    // Category breakdown
+    const breakdown=document.createElement('div');
+    cats.forEach(ct=>{
+      const cc=arch.cards.filter(c=>c.catId===ct.id);if(!cc.length)return;
+      const row=document.createElement('div');row.className='arch-cat-row';
+      row.innerHTML=`<span class="arch-cat-dot" style="background:${ct.color}"></span><span class="arch-cat-name">${esc(ct.name)}</span><span class="arch-cat-cnt">${cc.length}</span>`;
+      breakdown.appendChild(row);
+    });
+    body.appendChild(breakdown);
+    // Cards list
+    if(arch.cards.length){
+      const cardsList=document.createElement('div');cardsList.className='arch-cards';
+      arch.cards.forEach(card=>{
+        const c=catMap[card.catId]||{color:'#ccc'};
+        const el=document.createElement('div');el.className='arch-card-item';
+        el.style.borderLeftColor=c.color;
+        el.textContent=card.text||'(без текста)';
+        cardsList.appendChild(el);
+      });
+      body.appendChild(cardsList);
+    }
+    item.appendChild(body);list.appendChild(item);
+  });
+}
+
+function showInfoToast(msg){
+  document.querySelector('.toast-txt').textContent=msg;
+  const fill=document.getElementById('tfill');
+  fill.classList.remove('run');void fill.offsetWidth;fill.classList.add('run');
+  document.getElementById('toast').classList.add('show');
+  clearTimeout(delTimer);
+  delTimer=setTimeout(()=>{document.getElementById('toast').classList.remove('show');fill.classList.remove('run');},4000);
+}
 function renderCatList(){
   const list=document.getElementById('catList');list.innerHTML='';
   editCats.forEach((c,i)=>{
