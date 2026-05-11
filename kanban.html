@@ -835,6 +835,10 @@ function load() {
     merge('secColors',    {year:'#FFFBDD',month:'#FFFBDD'});
     merge('secNames',     {year:'Канбан года',month:'Канбан месяца'});
     merge('archives',     []);
+    merge('habits',       []);
+    merge('habitChecks',  {});
+    merge('energyLog',    {});
+    merge('trackersHidden',{habits:false,energy:false});
   } catch(e) {}
 }
 
