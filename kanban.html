@@ -825,6 +825,13 @@ const mkWeekGoals = () => [
   {id:uid(),text:'',color:'#B5EAFF',rot:+(Math.random()*2.4-1.2).toFixed(2)},
   {id:uid(),text:'',color:'#C3F5C3',rot:+(Math.random()*2.4-1.2).toFixed(2)},
 ];
+const mkHierarchyGoals = () => [
+  {id:uid(),label:'🌟 Жизнь',    stickers:mkFocus()},
+  {id:uid(),label:'🔭 10 лет',   stickers:mkFocus()},
+  {id:uid(),label:'🎯 5 лет',    stickers:mkFocus()},
+  {id:uid(),label:'📅 1 год',    stickers:mkFocus()},
+];
+const mkStandardStickers = () => (S.categories||[]).map(c=>({id:uid(),catId:c.id,text:'',color:c.color}));
 const mkIdentity = () => [
   {id:uid(),text:'',color:'#FFFBDD',rot:+(Math.random()*1.6-0.8).toFixed(2)},
   {id:uid(),text:'',color:'#FFF0B3',rot:+(Math.random()*1.6-0.8).toFixed(2)},
