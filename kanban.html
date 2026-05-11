@@ -1110,6 +1110,13 @@ function showInfoToast(msg){
   delTimer=setTimeout(()=>{document.getElementById('toast').classList.remove('show');fill.classList.remove('run');},4000);
 }
 function renderCatList(){
+  const msg=document.getElementById('catLimitMsg');
+  const btn=document.getElementById('addCatBtn');
+  if(msg&&btn){
+    const atLimit=editCats.length>=MAX_CATS;
+    msg.classList.toggle('show',atLimit);
+    btn.style.opacity=atLimit?'0.4':'1';
+  }
   const list=document.getElementById('catList');list.innerHTML='';
   editCats.forEach((c,i)=>{
     const item=document.createElement('div');item.className='cat-item'+(palOpenIdx===i?' pal-open':'');
