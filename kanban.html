@@ -66,68 +66,94 @@ header {
 .legend-item { display: flex; align-items: center; gap: 4px; font-size: 10px; color: rgba(255,255,255,0.65); white-space: nowrap; }
 .ldot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 
+/* ── SIDEBAR ── */
+.sidebar {
+  position: fixed; left: 0; top: 77px; bottom: 0;
+  width: 44px; z-index: 80;
+  background: rgba(18,15,10,0.88);
+  backdrop-filter: blur(10px);
+  display: flex; flex-direction: column;
+  padding: 8px 6px 12px; gap: 3px;
+  overflow: hidden;
+  transition: width 0.22s cubic-bezier(0.4,0,0.2,1);
+  border-right: 1px solid rgba(255,255,255,0.07);
+}
+.sidebar.sb-open { width: 160px; }
+
+.sb-toggle {
+  background: rgba(255,255,255,0.08); border: none; border-radius: 7px;
+  color: rgba(255,255,255,0.55); font-size: 15px; cursor: pointer;
+  width: 32px; height: 32px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 6px; align-self: center;
+  transition: background 0.15s, color 0.15s;
+}
+.sb-toggle:hover { background: rgba(255,255,255,0.16); color: #fff; }
+
+.sb-item {
+  width: 32px; min-height: 36px; flex-shrink: 0;
+  background: none; border: none; cursor: pointer;
+  display: flex; align-items: center; gap: 9px;
+  padding: 6px; border-radius: 9px;
+  color: rgba(255,255,255,0.45); white-space: nowrap; overflow: hidden;
+  transition: background 0.15s, color 0.15s;
+  font-family: inherit; font-size: 11px; font-weight: 600;
+}
+.sidebar.sb-open .sb-item { width: 100%; padding: 6px 9px; }
+.sb-item:hover { background: rgba(255,255,255,0.09); color: rgba(255,255,255,0.85); }
+.sb-item.sb-on { background: rgba(255,255,255,0.14); color: #fff; }
+.sb-icon { font-size: 15px; flex-shrink: 0; line-height: 1; width: 20px; text-align: center; }
+.sb-lbl { flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
+.sb-dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,0.2); flex-shrink: 0; transition: background 0.15s; }
+.sb-item.sb-on .sb-dot { background: #88ffaa; }
+
 /* ── SECTIONS ── */
-.sections { display: flex; flex-direction: column; }
+.sections { display: flex; flex-direction: column; margin-left: 44px; transition: margin-left 0.22s cubic-bezier(0.4,0,0.2,1); }
+.legend-bar { margin-left: 44px; transition: margin-left 0.22s cubic-bezier(0.4,0,0.2,1); }
+body.sb-open .sections { margin-left: 160px; }
+body.sb-open .legend-bar { margin-left: 160px; }
+
 .section { display: flex; flex-direction: column; }
 .section.year, .section.month { height: auto; }
-.section.sec-hidden { height: 90px !important; min-height: 0 !important; overflow: hidden; }
+.section.sec-hidden { height: 36px !important; min-height: 0 !important; overflow: hidden; }
 .section.sec-hidden .board { display: none; }
 .section.sec-hidden .focus-row { display: none; }
 .section.sec-hidden .tracker-body { display: none; }
 
-/* Section header */
+/* ── COMPACT SECTION HEADER ── */
 .sec-hdr {
-  height: 90px; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  padding: 8px 10px; position: relative;
-  background: rgba(0,0,0,0.2);
+  height: 36px; flex-shrink: 0;
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 10px;
+  background: rgba(0,0,0,0.22);
+  border-left: 3px solid rgba(255,255,255,0.15);
 }
-.sec-sticker {
-  min-width: 76px; min-height: 76px;
-  padding: 10px 12px;
-  border-radius: 3px 3px 6px 6px;
-  box-shadow: 2px 4px 10px rgba(0,0,0,0.35), 0 1px 3px rgba(0,0,0,0.18),
-              inset 0 1px 0 rgba(255,255,255,0.45);
-  position: relative; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 5px;
-  transform: rotate(-0.8deg);
-}
-.sec-sticker::before { display: none; }
-.sec-sticker::after {
-  content: ''; position: absolute; bottom: 0; right: 0;
-  width: 12px; height: 12px;
-  background: linear-gradient(225deg, rgba(0,0,0,0.13) 50%, transparent 50%);
-  border-radius: 0 0 5px 0;
-}
-.sec-color-dot {
+.sec-hdr-dot {
   width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
-  cursor: pointer; border: 1.5px solid rgba(0,0,0,0.2); transition: transform 0.1s;
+  cursor: pointer; border: 1.5px solid rgba(0,0,0,0.25);
+  background: rgba(255,255,255,0.25); transition: transform 0.1s;
 }
-.sec-color-dot:active { transform: scale(1.3); }
-.sec-name {
-  background: transparent; border: none; outline: none;
-  font-size: 10px; font-weight: 800; color: rgba(0,0,0,0.72);
-  letter-spacing: 0.3px; text-transform: uppercase; text-align: center;
-  font-family: inherit; border-bottom: 1px solid transparent;
-  cursor: text; transition: border-color 0.15s;
-  width: auto; max-width: 120px; min-width: 50px;
-  line-height: 1.35; word-break: break-word;
+.sec-hdr-dot:active { transform: scale(1.3); }
+.sec-hdr-name {
+  flex: 1; background: transparent; border: none; outline: none;
+  font-size: 10px; font-weight: 800; color: rgba(255,255,255,0.55);
+  letter-spacing: 0.4px; text-transform: uppercase;
+  font-family: inherit; border-bottom: 1px solid transparent; cursor: text;
+  transition: border-color 0.15s, color 0.15s; min-width: 0;
 }
-.sec-name:focus { border-bottom-color: rgba(0,0,0,0.3); }
+.sec-hdr-name:focus { border-bottom-color: rgba(255,255,255,0.35); color: rgba(255,255,255,0.9); }
 .sec-toggle-btn {
-  position: absolute; right: 10px;
-  background: rgba(255,255,255,0.12); border: none; border-radius: 5px;
-  color: rgba(255,255,255,0.75); font-size: 10px; font-weight: 600;
-  padding: 2px 8px; cursor: pointer;
+  background: rgba(255,255,255,0.08); border: none; border-radius: 5px;
+  color: rgba(255,255,255,0.5); font-size: 10px; font-weight: 600;
+  padding: 2px 7px; cursor: pointer; flex-shrink: 0; white-space: nowrap;
 }
-.sec-toggle-btn:active { background: rgba(255,255,255,0.25); }
+.sec-toggle-btn:active { background: rgba(255,255,255,0.18); color: #fff; }
 .sec-archive-btn {
-  position: absolute; right: 80px;
-  background: rgba(255,220,100,0.18); border: 1px solid rgba(255,220,100,0.3);
-  border-radius: 5px; color: rgba(255,230,130,0.9); font-size: 10px; font-weight: 600;
-  padding: 2px 8px; cursor: pointer; white-space: nowrap;
+  background: rgba(255,220,100,0.15); border: 1px solid rgba(255,220,100,0.28);
+  border-radius: 5px; color: rgba(255,230,130,0.85); font-size: 10px; font-weight: 600;
+  padding: 2px 7px; cursor: pointer; white-space: nowrap; flex-shrink: 0;
 }
-.sec-archive-btn:active { background: rgba(255,220,100,0.35); }
+.sec-archive-btn:active { background: rgba(255,220,100,0.3); }
 
 /* ── ARCHIVE MODAL ── */
 .arch-item { border: 1.5px solid #eee; border-radius: 11px; margin-bottom: 8px; overflow: hidden; }
