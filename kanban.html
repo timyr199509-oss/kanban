@@ -1206,48 +1206,92 @@ function openArchive(){
 
 function renderArchiveList(){
   const list=document.getElementById('archiveList');
-  if(!S.archives||S.archives.length===0){
-    list.innerHTML='<div class="arch-empty">Архив пуст — закройте месяц, чтобы появилась запись</div>';return;
+  const monthArch=S.archives||[];
+  const yearArch=S.focusArchives||[];
+  const allYears=new Set([...monthArch.map(a=>a.year||0),...yearArch.map(a=>a.year)].filter(Boolean));
+  // Also include month archives with no year
+  const noYear=monthArch.filter(a=>!a.year);
+
+  if(!allYears.size&&!noYear.length){
+    list.innerHTML='<div class="arch-empty">Архив пуст — закройте месяц или год, чтобы появилась запись</div>';return;
   }
   list.innerHTML='';
-  S.archives.forEach(arch=>{
+
+  // Render year groups
+  [...allYears].sort((a,b)=>b-a).forEach(year=>{
+    const months=monthArch.filter(a=>a.year===year).sort((a,b)=>b.month-a.month);
+    const focus=yearArch.find(a=>a.year===year);
+    const totalTasks=months.reduce((s,a)=>s+a.cards.length,0);
+
     const item=document.createElement('div');item.className='arch-item';
     const hdr=document.createElement('div');hdr.className='arch-hdr';
-    hdr.innerHTML=`<span class="arch-label">${arch.label}</span><span class="arch-count">${arch.cards.length} задач ✓</span><button class="arch-del-btn" title="Удалить запись">✕</button>`;
+    hdr.innerHTML=`<span class="arch-label">📅 ${year} год</span><span class="arch-count">${months.length} мес · ${totalTasks} задач</span><button class="arch-del-btn" title="Удалить год">✕</button>`;
     hdr.querySelector('.arch-del-btn').addEventListener('click',e=>{
       e.stopPropagation();
-      if(!confirm(`Удалить архив "${arch.label}"?`))return;
-      S.archives=S.archives.filter(a=>a.id!==arch.id);
-      save(); renderArchiveList();
+      if(!confirm(`Удалить весь архив ${year} года?`))return;
+      S.archives=S.archives.filter(a=>a.year!==year);
+      S.focusArchives=S.focusArchives.filter(a=>a.year!==year);
+      save();renderArchiveList();
     });
-    hdr.addEventListener('click',e=>{ if(!e.target.classList.contains('arch-del-btn'))item.classList.toggle('arch-open'); });
+    hdr.addEventListener('click',e=>{if(!e.target.classList.contains('arch-del-btn'))item.classList.toggle('arch-open');});
     item.appendChild(hdr);
+
     const body=document.createElement('div');body.className='arch-body';
-    const cats=arch.categories||S.categories;
-    const catMap={};cats.forEach(c=>catMap[c.id]=c);
-    // Category breakdown
-    const breakdown=document.createElement('div');
-    cats.forEach(ct=>{
-      const cc=arch.cards.filter(c=>c.catId===ct.id);if(!cc.length)return;
-      const row=document.createElement('div');row.className='arch-cat-row';
-      row.innerHTML=`<span class="arch-cat-dot" style="background:${ct.color}"></span><span class="arch-cat-name">${esc(ct.name)}</span><span class="arch-cat-cnt">${cc.length}</span>`;
-      breakdown.appendChild(row);
-    });
-    body.appendChild(breakdown);
-    // Cards list
-    if(arch.cards.length){
-      const cardsList=document.createElement('div');cardsList.className='arch-cards';
-      arch.cards.forEach(card=>{
-        const c=catMap[card.catId]||{color:'#ccc'};
-        const el=document.createElement('div');el.className='arch-card-item';
-        el.style.borderLeftColor=c.color;
-        el.textContent=card.text||'(без текста)';
-        cardsList.appendChild(el);
-      });
-      body.appendChild(cardsList);
+
+    // Годовые цели
+    if(focus){
+      const hasText=focus.stickers.some(s=>s.text);
+      if(hasText){
+        const fg=document.createElement('div');
+        fg.innerHTML='<div style="font-size:10px;font-weight:800;color:#888;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:7px;">★ Годовые цели</div>';
+        const srow=document.createElement('div');srow.style.cssText='display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;';
+        focus.stickers.forEach(stk=>{
+          if(!stk.text)return;
+          const el=document.createElement('div');
+          el.style.cssText=`background:${stk.color};padding:5px 9px;border-radius:3px 3px 6px 6px;font-size:11px;color:rgba(0,0,0,0.72);box-shadow:1px 2px 5px rgba(0,0,0,0.18);`;
+          el.textContent=stk.text;srow.appendChild(el);
+        });
+        fg.appendChild(srow);body.appendChild(fg);
+      }
     }
+
+    // Месяцы
+    if(months.length){
+      const ml=document.createElement('div');
+      ml.innerHTML='<div style="font-size:10px;font-weight:800;color:#888;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px;">📦 Месяцы</div>';
+      months.forEach(arch=>ml.appendChild(buildMonthArchItem(arch)));
+      body.appendChild(ml);
+    }
+
     item.appendChild(body);list.appendChild(item);
   });
+
+  // Старые записи без года
+  noYear.forEach(arch=>list.appendChild(buildMonthArchItem(arch)));
+}
+
+function buildMonthArchItem(arch){
+  const item=document.createElement('div');item.className='arch-item';item.style.marginBottom='6px';
+  const hdr=document.createElement('div');hdr.className='arch-hdr';
+  hdr.innerHTML=`<span class="arch-label">${arch.label}</span><span class="arch-count">${arch.cards.length} задач ✓</span><button class="arch-del-btn" title="Удалить">✕</button>`;
+  hdr.querySelector('.arch-del-btn').addEventListener('click',e=>{
+    e.stopPropagation();if(!confirm(`Удалить архив "${arch.label}"?`))return;
+    S.archives=S.archives.filter(a=>a.id!==arch.id);save();renderArchiveList();
+  });
+  hdr.addEventListener('click',e=>{if(!e.target.classList.contains('arch-del-btn'))item.classList.toggle('arch-open');});
+  item.appendChild(hdr);
+  const body=document.createElement('div');body.className='arch-body';
+  const cats=arch.categories||S.categories;const catMap={};cats.forEach(c=>catMap[c.id]=c);
+  if(arch.cards.length){
+    const cl=document.createElement('div');cl.className='arch-cards';
+    arch.cards.forEach(card=>{
+      const c=catMap[card.catId]||{color:'#ccc'};
+      const el=document.createElement('div');el.className='arch-card-item';
+      el.style.borderLeftColor=c.color;el.textContent=card.text||'(без текста)';cl.appendChild(el);
+    });
+    body.appendChild(cl);
+  }
+  item.appendChild(body);return item;
 }
 
 function showInfoToast(msg){
