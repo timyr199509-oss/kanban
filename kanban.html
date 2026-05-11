@@ -979,6 +979,7 @@ function buildCard(card, secId, inDone) {
   const mb=document.createElement('button'); mb.className='card-menu-btn'; mb.textContent='···';
   mb.addEventListener('click',e=>{e.stopPropagation();showCardPopup(card.id,secId,inDone,mb);});
   el.appendChild(mb);
+  buildSubtasks(el, card);
 
   let pressT;
   el.addEventListener('touchstart',()=>{pressT=setTimeout(()=>{mb.classList.add('vis');showCardPopup(card.id,secId,inDone,mb);},500);},{passive:true});
