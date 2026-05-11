@@ -1041,8 +1041,20 @@ function renderCatList(){
     item.appendChild(pal);list.appendChild(item);
   });
 }
-function addCat(){editCats.push({id:uid(),name:'Новая',color:PALETTE[Math.floor(Math.random()*PALETTE.length)]});palOpenIdx=null;renderCatList();setTimeout(()=>{const m=document.querySelector('#ovSettings .modal');m.scrollTop=m.scrollHeight;},40);}
-function saveSettings(){S.categories=editCats.filter(c=>c.name.trim());if(!S.categories.length)S.categories=DEFAULT_CATS.map(c=>({...c}));save();render();closeOv('ovSettings');}
+function addCat(){
+  const msg=document.getElementById('catLimitMsg');
+  const btn=document.getElementById('addCatBtn');
+  if(editCats.length>=MAX_CATS){msg.classList.add('show');return;}
+  msg.classList.remove('show');
+  editCats.push({id:uid(),name:'Новая',color:PALETTE[Math.floor(Math.random()*PALETTE.length)]});
+  palOpenIdx=null;renderCatList();
+  setTimeout(()=>{const m=document.querySelector('#ovSettings .modal');m.scrollTop=m.scrollHeight;},40);
+}
+function saveSettings(){
+  S.categories=editCats.filter(c=>c.name.trim()).slice(0,MAX_CATS);
+  if(!S.categories.length)S.categories=DEFAULT_CATS.map(c=>({...c}));
+  save();render();closeOv('ovSettings');
+}
 
 // ── BALANCE WHEEL ────────────────────────
 function openBalance(){
