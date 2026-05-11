@@ -1196,11 +1196,36 @@ function buildFocusStickerRow(rowEl, label, stickersArr) {
 
 function buildFocusRow(secId) {
   const row=document.getElementById('focus-row-'+secId); if(!row)return; row.innerHTML='';
-  buildFocusStickerRow(row, '★ Фокус', S.focusStickers[secId]);
+  const yr=document.createElement('div'); yr.className='yfocus-row';
+  // ★ Фокус label + stickers
+  const lbl1=document.createElement('div'); lbl1.className='focus-row-label'; lbl1.textContent='★ Фокус';
+  yr.appendChild(lbl1);
+  S.focusStickers[secId].forEach(stk=>yr.appendChild(buildFocusStk(stk, S.focusStickers[secId])));
   if(secId==='month'){
     ensureWeekFocus();
-    buildFocusStickerRow(row, '★ Цели недели', S.weekStickers);
+    // Divider
+    const sep=document.createElement('div'); sep.className='focus-row-sep';
+    yr.appendChild(sep);
+    // ★ Цели недели label + stickers
+    const lbl2=document.createElement('div'); lbl2.className='focus-row-label'; lbl2.textContent='★ Цели недели';
+    yr.appendChild(lbl2);
+    S.weekStickers.forEach(stk=>yr.appendChild(buildFocusStk(stk, S.weekStickers)));
   }
+  row.appendChild(yr);
+}
+function buildFocusStk(stk, arr) {
+  const s=document.createElement('div'); s.className='focus-sq'; s.style.background=stk.color;
+  s.style.setProperty('--frot',(stk.rot||0)+'deg');
+  const ta=document.createElement('textarea'); ta.placeholder='Цель...'; ta.value=stk.text;
+  ta.addEventListener('mousedown',e=>e.stopPropagation());
+  ta.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true});
+  ta.addEventListener('input',()=>{stk.text=ta.value;save();autoH(ta);});
+  setTimeout(()=>autoH(ta),0);
+  s.appendChild(ta);
+  const cb=document.createElement('div'); cb.className='fsq-color-btn'; cb.style.background=stk.color;
+  cb.addEventListener('click',e=>{e.stopPropagation();openFloatPal('focus-stk',e,hex=>{stk.color=hex;save();cb.style.background=hex;s.style.background=hex;});});
+  s.appendChild(cb);
+  return s;
 }
 
 // ── YEAR FOCUS AREA ──────────────────────
