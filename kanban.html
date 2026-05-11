@@ -1033,13 +1033,11 @@ document.addEventListener('click',e=>{ const p=document.getElementById('cardPopu
 document.addEventListener('scroll',()=>closeCardPopup(),true);
 
 // ── FOCUS ROW (month) ────────────────────
-function buildFocusRow(secId) {
-  const stickers=S.focusStickers[secId];
-  const row=document.getElementById('focus-row-'+secId); if(!row)return; row.innerHTML='';
+function buildFocusStickerRow(rowEl, label, stickersArr) {
   const yr=document.createElement('div'); yr.className='yfocus-row';
-  const lbl=document.createElement('div'); lbl.className='focus-row-label'; lbl.textContent='★ Фокус';
+  const lbl=document.createElement('div'); lbl.className='focus-row-label'; lbl.textContent=label;
   yr.appendChild(lbl);
-  stickers.forEach(stk=>{
+  stickersArr.forEach(stk=>{
     const s=document.createElement('div'); s.className='focus-sq'; s.style.background=stk.color;
     s.style.setProperty('--frot',(stk.rot||0)+'deg');
     const ta=document.createElement('textarea'); ta.placeholder='Цель...'; ta.value=stk.text;
@@ -1052,7 +1050,16 @@ function buildFocusRow(secId) {
     cb.addEventListener('click',e=>{e.stopPropagation();openFloatPal('focus-stk',e,hex=>{stk.color=hex;save();cb.style.background=hex;s.style.background=hex;});});
     s.appendChild(cb); yr.appendChild(s);
   });
-  row.appendChild(yr);
+  rowEl.appendChild(yr);
+}
+
+function buildFocusRow(secId) {
+  const row=document.getElementById('focus-row-'+secId); if(!row)return; row.innerHTML='';
+  buildFocusStickerRow(row, '★ Фокус', S.focusStickers[secId]);
+  if(secId==='month'){
+    ensureWeekFocus();
+    buildFocusStickerRow(row, '★ Цели недели', S.weekStickers);
+  }
 }
 
 // ── YEAR FOCUS AREA ──────────────────────
