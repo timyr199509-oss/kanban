@@ -73,11 +73,11 @@ header {
 .ldot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 
 /* ── SECTIONS ── */
-.sections { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-.section { display: flex; flex-direction: column; min-height: 0; overflow: hidden; transition: flex 0.28s ease; }
-.section.year  { flex: 0 0 38%; }
-.section.month { flex: 1; }
-.section.sec-hidden { flex: 0 0 34px !important; }
+.sections { display: flex; flex-direction: column; }
+.section { display: flex; flex-direction: column; overflow: hidden; }
+.section.year  { height: 370px; min-height: 200px; }
+.section.month { height: 370px; min-height: 200px; }
+.section.sec-hidden { height: 34px !important; overflow: hidden; }
 .section.sec-hidden .board { display: none; }
 .section.sec-hidden .focus-row { display: none; }
 
