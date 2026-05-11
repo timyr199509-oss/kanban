@@ -761,6 +761,8 @@ function render() {
   renderLegend();
   applySecStates();
   ensureFocus();
+  ensureIdentity();
+  buildIdentityRow();
   SECTIONS.forEach(sec => {
     const board = document.getElementById('board-'+sec.id);
     board.innerHTML = '';
