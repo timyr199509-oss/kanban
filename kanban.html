@@ -676,16 +676,18 @@ function load() {
     const merge = (key, def) => S[key] = (d[key] !== undefined ? d[key] : def);
     merge('title',        'Kanban');
     merge('cards',        []);
-    S.categories   = (d.categories && d.categories.length) ? d.categories : DEFAULT_CATS.map(c=>({...c}));
+    S.categories   = (d.categories && d.categories.length) ? d.categories.slice(0, MAX_CATS) : DEFAULT_CATS.map(c=>({...c}));
     merge('colTitles',    {});
     merge('doneOpen',     {});
     merge('hidden',       {year:false,month:false});
-    merge('yearHeight',   38);
+    // Migrate old yearHeight (was % like 38, now px like 370)
+    S.yearHeight = (d.yearHeight !== undefined && d.yearHeight >= 100) ? d.yearHeight : 370;
     merge('balanceTitle', 'Колесо баланса');
     merge('balanceScores',{});
     merge('focusStickers',{year:null,month:null});
     merge('secColors',    {year:'#FFFBDD',month:'#FFFBDD'});
     merge('secNames',     {year:'Канбан года',month:'Канбан месяца'});
+    merge('archives',     []);
   } catch(e) {}
 }
 
