@@ -1056,7 +1056,7 @@ function openPalWithCb(e, cb) {
   const pal=document.getElementById('floatPal'); pal.innerHTML=''; pal.style.display='flex';
   PALETTE.forEach(hex=>{
     const p=document.createElement('div'); p.className='fsp-col'; p.style.background=hex;
-    p.addEventListener('click',()=>{ pal.classList.remove('show'); pal.style.display='none'; cb(hex); });
+    p.addEventListener('click',()=>{ closeFloatPal(); cb(hex); });
     pal.appendChild(p);
   });
   pal.classList.add('show');
