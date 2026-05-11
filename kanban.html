@@ -1309,7 +1309,32 @@ function buildMonthArchItem(arch){
     arch.cards.forEach(card=>{
       const c=catMap[card.catId]||{color:'#ccc'};
       const el=document.createElement('div');el.className='arch-card-item';
-      el.style.borderLeftColor=c.color;el.textContent=card.text||'(без текста)';cl.appendChild(el);
+      el.style.borderLeftColor=c.color;
+      const txt=document.createElement('span');txt.className='arch-card-text';txt.textContent=card.text||'(без текста)';
+      // Restore button
+      const rb=document.createElement('button');rb.className='arch-card-restore';rb.textContent='↩ Вернуть';
+      rb.title='Вернуть карточку на доску';
+      rb.addEventListener('click',e=>{
+        e.stopPropagation();
+        // Return card to m-todo (or y-todo if year archive)
+        const destCol = arch.month ? 'm-todo' : 'y-todo';
+        S.cards.push({...card, col: destCol, rot: rot()});
+        arch.cards=arch.cards.filter(x=>x.id!==card.id);
+        if(!arch.cards.length){ S.archives=S.archives.filter(a=>a.id!==arch.id); }
+        save(); render(); renderArchiveList();
+        showInfoToast(`Карточка возвращена на доску`);
+      });
+      // Delete button
+      const db=document.createElement('button');db.className='arch-card-del';db.textContent='✕';
+      db.title='Удалить навсегда';
+      db.addEventListener('click',e=>{
+        e.stopPropagation();
+        arch.cards=arch.cards.filter(x=>x.id!==card.id);
+        if(!arch.cards.length){ S.archives=S.archives.filter(a=>a.id!==arch.id); }
+        save(); renderArchiveList();
+      });
+      el.appendChild(txt);el.appendChild(rb);el.appendChild(db);
+      cl.appendChild(el);
     });
     body.appendChild(cl);
   }
