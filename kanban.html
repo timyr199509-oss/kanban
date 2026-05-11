@@ -581,7 +581,8 @@ header {
     <div class="m-handle"></div>
     <h3>Мои категории</h3>
     <div class="cat-list" id="catList"></div>
-    <button class="add-cat-btn" onclick="addCat()">+ Новая категория</button>
+    <div class="cat-limit-msg" id="catLimitMsg">Максимум 5 категорий — удалите одну, чтобы добавить новую</div>
+    <button class="add-cat-btn" id="addCatBtn" onclick="addCat()">+ Новая категория</button>
     <div class="divider"></div>
     <div class="m-actions">
       <button class="btn-cancel" onclick="closeOv('ovSettings')">Закрыть</button>
