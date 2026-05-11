@@ -1515,9 +1515,20 @@ function drawWheel(){
   const compPts=cats.map((c,i)=>{const r=(completion[c.id]||0)/10*R;return`${cx+r*Math.cos(ang(i))},${cy+r*Math.sin(ang(i))}`;}).join(' ');
   const compPoly=document.createElementNS(ns,'polygon');compPoly.setAttribute('points',compPts);compPoly.setAttribute('fill','rgba(30,160,100,0.12)');compPoly.setAttribute('stroke','rgba(30,160,100,0.7)');compPoly.setAttribute('stroke-width','1.5');compPoly.setAttribute('stroke-dasharray','4 3');svg.appendChild(compPoly);
 
-  // Manual score polygon (blue solid)
-  const manPts=cats.map((c,i)=>{const r=(S.balanceScores[c.id]||0)/10*R;return`${cx+r*Math.cos(ang(i))},${cy+r*Math.sin(ang(i))}`;}).join(' ');
-  const manPoly=document.createElementNS(ns,'polygon');manPoly.setAttribute('points',manPts);manPoly.setAttribute('fill','rgba(80,130,230,0.2)');manPoly.setAttribute('stroke','rgba(60,110,210,0.75)');manPoly.setAttribute('stroke-width','2');manPoly.setAttribute('stroke-linejoin','round');svg.appendChild(manPoly);
+  // Colored sectors for manual scores (one per category)
+  cats.forEach((c,i)=>{
+    const score=S.balanceScores[c.id]||0; if(!score)return;
+    const r=score/10*R;
+    const a1=ang(i), a2=ang((i+1)%N);
+    const x1=cx+r*Math.cos(a1),y1=cy+r*Math.sin(a1);
+    const x2=cx+r*Math.cos(a2),y2=cy+r*Math.sin(a2);
+    const largeArc=(2*Math.PI/N)>Math.PI?1:0;
+    const path=document.createElementNS(ns,'path');
+    path.setAttribute('d',`M ${cx},${cy} L ${x1},${y1} A ${r},${r} 0 ${largeArc},1 ${x2},${y2} Z`);
+    path.setAttribute('fill',c.color); path.setAttribute('fill-opacity','0.55');
+    path.setAttribute('stroke',c.color); path.setAttribute('stroke-width','1.5'); path.setAttribute('stroke-opacity','0.9');
+    svg.appendChild(path);
+  });
 
   // Dots + labels
   cats.forEach((c,i)=>{
