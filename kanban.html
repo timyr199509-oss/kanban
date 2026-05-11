@@ -596,6 +596,28 @@ header {
     <div class="board" id="board-year"></div>
   </div>
 
+  <div class="section tracker-sec" id="section-habits">
+    <div class="sec-hdr">
+      <div class="sec-sticker" style="background:#CCFF88">
+        <div class="sec-color-dot" style="background:rgba(0,0,0,0.12)"></div>
+        <input class="sec-name" type="text" value="Привычки" readonly>
+      </div>
+      <button class="sec-toggle-btn" onclick="toggleTracker('habits')">▲ Скрыть</button>
+    </div>
+    <div class="tracker-body" id="habits-body"></div>
+  </div>
+
+  <div class="section tracker-sec" id="section-energy">
+    <div class="sec-hdr">
+      <div class="sec-sticker" style="background:#88DEFF">
+        <div class="sec-color-dot" style="background:rgba(0,0,0,0.12)"></div>
+        <input class="sec-name" type="text" value="Энергия" readonly>
+      </div>
+      <button class="sec-toggle-btn" onclick="toggleTracker('energy')">▲ Скрыть</button>
+    </div>
+    <div class="tracker-body" id="energy-body"></div>
+  </div>
+
   <div class="resize-handle" id="resizeHandle"></div>
 
   <div class="section month" id="section-month">
