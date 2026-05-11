@@ -852,7 +852,8 @@ function buildFocusRow(secId) {
     const ta=document.createElement('textarea'); ta.placeholder='Цель...'; ta.value=stk.text;
     ta.addEventListener('mousedown',e=>e.stopPropagation());
     ta.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true});
-    ta.addEventListener('input',()=>{stk.text=ta.value;save();});
+    ta.addEventListener('input',()=>{stk.text=ta.value;save();autoH(ta);});
+    setTimeout(()=>autoH(ta),0);
     s.appendChild(ta);
     const cb=document.createElement('div'); cb.className='fsq-color-btn'; cb.style.background=stk.color;
     cb.addEventListener('click',e=>{e.stopPropagation();openFloatPal('focus-stk',e,hex=>{stk.color=hex;save();render();});});
