@@ -1048,8 +1048,14 @@ function renderArchiveList(){
   S.archives.forEach(arch=>{
     const item=document.createElement('div');item.className='arch-item';
     const hdr=document.createElement('div');hdr.className='arch-hdr';
-    hdr.innerHTML=`<span class="arch-label">${arch.label}</span><span class="arch-count">${arch.cards.length} задач ✓</span>`;
-    hdr.addEventListener('click',()=>item.classList.toggle('arch-open'));
+    hdr.innerHTML=`<span class="arch-label">${arch.label}</span><span class="arch-count">${arch.cards.length} задач ✓</span><button class="arch-del-btn" title="Удалить запись">✕</button>`;
+    hdr.querySelector('.arch-del-btn').addEventListener('click',e=>{
+      e.stopPropagation();
+      if(!confirm(`Удалить архив "${arch.label}"?`))return;
+      S.archives=S.archives.filter(a=>a.id!==arch.id);
+      save(); renderArchiveList();
+    });
+    hdr.addEventListener('click',e=>{ if(!e.target.classList.contains('arch-del-btn'))item.classList.toggle('arch-open'); });
     item.appendChild(hdr);
     const body=document.createElement('div');body.className='arch-body';
     const cats=arch.categories||S.categories;
