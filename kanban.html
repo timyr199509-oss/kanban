@@ -923,6 +923,7 @@ function load() {
     const defNames={year:'Канбан года',month:'Канбан месяца',habits:'Привычки',energy:'Энергия',hierarchy:'Иерархия целей',standard:'Стандарт жизни'};
     S.secNames=Object.assign({},defNames,d.secNames||{});
     merge('sectionOrder', ['hierarchy','habits','energy','year','standard','month']);
+    merge('sidebarOpen', true);
     // Ensure all section IDs exist in the order array
     ['hierarchy','habits','energy','year','standard','month'].forEach(id=>{if(!S.sectionOrder.includes(id))S.sectionOrder.push(id);});
     merge('archives',     []);
