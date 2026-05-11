@@ -847,13 +847,16 @@ let S = {
   identityStickers: null,
   yearFocuses: [],
   focusArchives: [],
-  secColors: { year:'#FFFBDD', month:'#FFFBDD' },
-  secNames: { year:'Канбан года', month:'Канбан месяца' },
+  secColors: { year:'#FFFBDD', month:'#FFFBDD', habits:'#CCFF88', energy:'#88DEFF', hierarchy:'#FFD9A0', standard:'#E8D5FF' },
+  secNames: { year:'Канбан года', month:'Канбан месяца', habits:'Привычки', energy:'Энергия', hierarchy:'Иерархия целей', standard:'Стандарт жизни' },
+  sectionOrder: ['hierarchy','habits','energy','year','standard','month'],
   archives: [],
   habits: [],
   habitChecks: {},
   energyLog: {},
-  trackersHidden: {habits: false, energy: false},
+  trackersHidden: {habits:false, energy:false, hierarchy:false, standard:false},
+  hierarchyGoals: null,
+  standardStickers: null,
 };
 
 let pendingDel=null, delTimer=null;
