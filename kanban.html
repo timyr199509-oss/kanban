@@ -1382,10 +1382,10 @@ function buildCard(card, secId, inDone) {
   el.addEventListener('touchstart',()=>{pressT=setTimeout(()=>{mb.classList.add('vis');showCardPopup(card.id,secId,inDone,mb);},500);},{passive:true});
   el.addEventListener('touchend',()=>clearTimeout(pressT));
 
-  el.addEventListener('dragstart',()=>{dragId=card.id;setTimeout(()=>el.classList.add('dragging'),0);});
+  el.addEventListener('dragstart',e=>{e.stopPropagation();dragId=card.id;setTimeout(()=>el.classList.add('dragging'),0);});
   el.addEventListener('dragend',()=>{
     el.classList.remove('dragging'); dragId=null;
-    document.querySelectorAll('.drag-over').forEach(x=>x.classList.remove('drag-over'));
+    document.querySelectorAll('.drag-over,.sec-dragging,.sec-drag-over').forEach(x=>x.classList.remove('drag-over','sec-dragging','sec-drag-over'));
   });
   return el;
 }
