@@ -1366,11 +1366,10 @@ function buildCard(card, secId, inDone) {
   const el=document.createElement('div');
   el.className='card'; el.dataset.id=card.id;
   el.style.setProperty('--rot',(card.rot||0)+'deg');
-  el.style.background=c.color; el.draggable=!inDone;
+  el.style.background=c.color; el.draggable=false; // enabled only from non-textarea mousedown
 
   const ta=document.createElement('textarea');
   ta.placeholder='...'; ta.value=card.text||'';
-  ta.addEventListener('mousedown',e=>e.stopPropagation());
   ta.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true});
   ta.addEventListener('input',()=>{card.text=ta.value;save();autoH(ta);});
   setTimeout(()=>autoH(ta),0);
@@ -1381,13 +1380,26 @@ function buildCard(card, secId, inDone) {
   el.appendChild(mb);
   buildSubtasks(el, card);
 
+  // Allow drag only when pressing the card background (not textarea/button/input)
+  el.addEventListener('mousedown',e=>{
+    const t=e.target;
+    if(!inDone && t.tagName!=='TEXTAREA' && t.tagName!=='INPUT' && t.tagName!=='BUTTON'){
+      el.draggable=true;
+    } else {
+      el.draggable=false;
+    }
+  });
+
   let pressT;
   el.addEventListener('touchstart',()=>{pressT=setTimeout(()=>{mb.classList.add('vis');showCardPopup(card.id,secId,inDone,mb);},500);},{passive:true});
   el.addEventListener('touchend',()=>clearTimeout(pressT));
 
-  el.addEventListener('dragstart',e=>{e.stopPropagation();dragId=card.id;setTimeout(()=>el.classList.add('dragging'),0);});
+  el.addEventListener('dragstart',e=>{
+    if(!el.draggable){e.preventDefault();return;}
+    e.stopPropagation();dragId=card.id;setTimeout(()=>el.classList.add('dragging'),0);
+  });
   el.addEventListener('dragend',()=>{
-    el.classList.remove('dragging'); dragId=null;
+    el.draggable=false; el.classList.remove('dragging'); dragId=null;
     document.querySelectorAll('.drag-over,.sec-dragging,.sec-drag-over').forEach(x=>x.classList.remove('drag-over','sec-dragging','sec-drag-over'));
   });
   return el;
