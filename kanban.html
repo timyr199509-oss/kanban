@@ -2035,15 +2035,14 @@ const DAY_NAMES_WEEK=['Пн','Вт','Ср','Чт','Пт','Сб','Вс']; // Mon=
 function buildHabitsSection(override){
   const body=override||(S.activePanel==='habits'?document.getElementById('panelBody'):document.getElementById('habits-body'));if(!body)return;body.innerHTML='';
   if(!S.habits)S.habits=[];if(!S.habitChecks)S.habitChecks={};
-  const days=last7Days(),today=todayStr();
+  const days=currentWeekDays(),today=todayStr();
   // Header row
   const hdrRow=document.createElement('div');hdrRow.className='habits-hdr-row';
   hdrRow.innerHTML='<div class="habits-hdr-name">Привычка</div>';
-  days.forEach(d=>{
-    const dn=new Date(d+'T12:00:00');
+  days.forEach((d,i)=>{
     const lbl=document.createElement('div');
     lbl.className='hday-lbl'+(d===today?' today-lbl':'');
-    lbl.textContent=DAY_NAMES_SHORT[dn.getDay()];
+    lbl.textContent=DAY_NAMES_WEEK[i]; // Пн Вт Ср Чт Пт Сб Вс
     hdrRow.appendChild(lbl);
   });
   body.appendChild(hdrRow);
