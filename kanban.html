@@ -1983,8 +1983,8 @@ function getStreak(hid){
 const HABIT_COLORS=['#FFEE66','#88DEFF','#99F5AA','#FF88CC','#BB99FF','#FFC28C','#FFABAB'];
 const DAY_NAMES_SHORT=['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
 
-function buildHabitsSection(){
-  const body=document.getElementById('habits-body');if(!body)return;body.innerHTML='';
+function buildHabitsSection(override){
+  const body=override||(S.activePanel==='habits'?document.getElementById('panelBody'):document.getElementById('habits-body'));if(!body)return;body.innerHTML='';
   if(!S.habits)S.habits=[];if(!S.habitChecks)S.habitChecks={};
   const days=last7Days(),today=todayStr();
   // Header row
