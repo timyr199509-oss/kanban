@@ -1215,7 +1215,10 @@ function buildCard(card, secId, inDone) {
   el.addEventListener('touchend',()=>clearTimeout(pressT));
 
   el.addEventListener('dragstart',()=>{dragId=card.id;setTimeout(()=>el.classList.add('dragging'),0);});
-  el.addEventListener('dragend',()=>{el.classList.remove('dragging');dragId=null;});
+  el.addEventListener('dragend',()=>{
+    el.classList.remove('dragging'); dragId=null;
+    document.querySelectorAll('.drag-over').forEach(x=>x.classList.remove('drag-over'));
+  });
   return el;
 }
 
