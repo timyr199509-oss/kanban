@@ -111,7 +111,7 @@ header {
 #section-hierarchy, #section-habits, #section-energy, #section-standard { display: none !important; }
 .panel-drawer {
   position: fixed; left: 44px; top: 77px; bottom: 0;
-  width: 360px; z-index: 70;
+  width: min(480px, calc(100vw - 44px)); z-index: 70;
   background: rgba(26,21,13,0.97);
   backdrop-filter: blur(14px);
   border-right: 1px solid rgba(255,255,255,0.09);
@@ -121,7 +121,7 @@ header {
   overflow: hidden;
 }
 .panel-drawer.panel-open { transform: translateX(0); }
-body.sb-open .panel-drawer { left: 160px; }
+body.sb-open .panel-drawer { left: 160px; width: min(480px, calc(100vw - 160px)); }
 .panel-hdr {
   height: 42px; flex-shrink: 0;
   display: flex; align-items: center; padding: 0 14px; gap: 10px;
@@ -135,7 +135,7 @@ body.sb-open .panel-drawer { left: 160px; }
   width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
 }
 .panel-close:hover { background: rgba(255,255,255,0.16); color: #fff; }
-.panel-body { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
+.panel-body { flex: 1; overflow-y: auto; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
 /* ── SECTIONS ── */
 .sections { display: flex; flex-direction: column; margin-left: 44px; transition: margin-left 0.22s cubic-bezier(0.4,0,0.2,1); }
