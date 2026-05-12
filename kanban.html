@@ -1420,7 +1420,7 @@ function buildDoneInner(colId,cards,secId){
 
 function setupDrop(area,colId){
   area.addEventListener('dragover',e=>{e.preventDefault();area.classList.add('drag-over');});
-  area.addEventListener('dragleave',()=>area.classList.remove('drag-over'));
+  area.addEventListener('dragleave',e=>{if(!area.contains(e.relatedTarget))area.classList.remove('drag-over');});
   area.addEventListener('drop',e=>{e.preventDefault();area.classList.remove('drag-over');if(dragId){const c=S.cards.find(x=>x.id===dragId);if(c){c.col=colId;save();render();}}});
 }
 
