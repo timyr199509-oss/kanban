@@ -1127,6 +1127,7 @@ function initSecDrag(){
     handle.onmousedown=()=>{ el.draggable=true; };
     handle.ontouchstart=()=>{ el.draggable=true; };
     el.ondragstart=e=>{
+      if(!el.draggable) return; // ignore bubbled card drags
       dragSecId=sid; el.classList.add('sec-dragging');
       e.dataTransfer.effectAllowed='move';
       e.dataTransfer.setData('text/plain',sid);
