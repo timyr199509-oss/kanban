@@ -1153,19 +1153,40 @@ function initSecDrag(){
 
 // ── SIDEBAR ──────────────────────────────
 function isGroupOn(g){
-  return g.secs.every(sid=>{
-    if(sid==='year'||sid==='month') return !S.hidden[sid];
-    return !(S.trackersHidden&&S.trackersHidden[sid]);
-  });
+  if(g.id==='kanban') return g.secs.every(sid=>!S.hidden[sid]);
+  return S.activePanel===g.id;
 }
 function toggleGroup(gid){
-  const g=SB_GROUPS.find(x=>x.id===gid); if(!g)return;
-  const on=isGroupOn(g);
-  g.secs.forEach(sid=>{
-    if(sid==='year'||sid==='month') S.hidden[sid]=on;
-    else { if(!S.trackersHidden)S.trackersHidden={}; S.trackersHidden[sid]=on; }
-  });
-  save(); render();
+  if(gid==='kanban'){
+    const g=SB_GROUPS.find(x=>x.id==='kanban');
+    const on=isGroupOn(g);
+    g.secs.forEach(sid=>S.hidden[sid]=on);
+    save(); render();
+  } else {
+    if(S.activePanel===gid) closePanel();
+    else openPanel(gid);
+  }
+}
+function openPanel(id){
+  S.activePanel=id; save();
+  const drawer=document.getElementById('panelDrawer');
+  const body=document.getElementById('panelBody');
+  const title=document.getElementById('panelTitle');
+  if(!drawer||!body)return;
+  const g=SB_GROUPS.find(x=>x.id===id);
+  if(title)title.textContent=(g?g.label:'');
+  body.innerHTML='';
+  if(id==='habits')buildHabitsSection(body);
+  else if(id==='energy')buildEnergySection(body);
+  else if(id==='hierarchy')buildHierarchySection(body);
+  else if(id==='standard')buildStandardSection(body);
+  drawer.classList.add('panel-open');
+  buildSidebar();
+}
+function closePanel(){
+  S.activePanel=null; save();
+  document.getElementById('panelDrawer').classList.remove('panel-open');
+  buildSidebar();
 }
 function buildSidebar(){
   const nav=document.getElementById('sidebar'); if(!nav)return;
