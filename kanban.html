@@ -2101,8 +2101,8 @@ function updateEnergyBars(){
 }
 
 // ── HIERARCHY SECTION ────────────────────
-function buildHierarchySection(){
-  const body=document.getElementById('hierarchy-body');if(!body)return;body.innerHTML='';
+function buildHierarchySection(override){
+  const body=override||(S.activePanel==='hierarchy'?document.getElementById('panelBody'):document.getElementById('hierarchy-body'));if(!body)return;body.innerHTML='';
   ensureHierarchy();
   const frow=document.createElement('div');frow.className='focus-row';
   frow.style.background='rgba(0,0,0,0.05)';
