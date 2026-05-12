@@ -2131,19 +2131,18 @@ function buildEnergySection(override){
 }
 function updateEnergyBars(){
   const barsRow=document.getElementById('energy-bars');if(!barsRow)return;barsRow.innerHTML='';
-  const days=last7Days(),today=todayStr();
-  days.forEach(d=>{
+  const days=currentWeekDays(),today=todayStr();
+  days.forEach((d,i)=>{
     const data=S.energyLog[d]||{p:0,e:0,m:0,s:0};
-    const dn=new Date(d+'T12:00:00');
     const col=document.createElement('div');col.className='energy-bar-day'+(d===today?' e-today':'');
     const stack=document.createElement('div');stack.className='energy-bar-stack';
     ENERGY_TYPES.forEach(type=>{
       const bar=document.createElement('div');bar.className='energy-bar-seg';
-      bar.style.height=((data[type.key]||0)/10*46+2)+'px';bar.style.background=type.color;
+      bar.style.height=((data[type.key]||0)/10*50+2)+'px';bar.style.background=type.color;
       stack.appendChild(bar);
     });
     const lbl=document.createElement('div');lbl.className='energy-bar-lbl';
-    lbl.textContent=DAY_NAMES_SHORT[dn.getDay()];
+    lbl.textContent=DAY_NAMES_WEEK[i]; // Пн–Вс
     col.appendChild(stack);col.appendChild(lbl);barsRow.appendChild(col);
   });
 }
