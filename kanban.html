@@ -1533,30 +1533,43 @@ function closeYearFocus(id){
   showInfoToast(`Год ${yf.year} сохранён в архив`);
 }
 
-// ── IDENTITY GROUP (in board) ─────────────
+// ── IDENTITY COLUMN (in board) ───────────
 function buildIdentityRow() {
   ensureIdentity();
   const board = document.getElementById('board-year'); if(!board) return;
-  board.querySelectorAll('.identity-sq').forEach(el=>el.remove());
-  const after = board.firstChild;
-  S.identityStickers.slice().reverse().forEach((stk, ri) => {
-    const i = S.identityStickers.length - 1 - ri;
-    const s = document.createElement('div'); s.className='identity-sq'; s.style.background=stk.color;
-    s.style.setProperty('--irot',(stk.rot||0)+'deg');
-    const qlbl = document.createElement('div'); qlbl.className='identity-sq-label';
-    qlbl.textContent = IDENTITY_LABELS[i] || '';
-    s.appendChild(qlbl);
-    const ta = document.createElement('textarea'); ta.placeholder='…'; ta.value=stk.text;
-    ta.addEventListener('mousedown',e=>e.stopPropagation());
-    ta.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true});
-    ta.addEventListener('input',()=>{stk.text=ta.value;save();autoH(ta);});
-    setTimeout(()=>autoH(ta),0);
-    s.appendChild(ta);
+  board.querySelectorAll('.identity-col').forEach(el=>el.remove());
+
+  const col = document.createElement('div'); col.className='identity-col';
+
+  // Column header sticker
+  const hdr = document.createElement('div'); hdr.className='identity-col-hdr'; hdr.textContent='Я';
+  col.appendChild(hdr);
+
+  // Cards area
+  const area = document.createElement('div'); area.className='identity-cards';
+  S.identityStickers.forEach((stk, i) => {
+    const card = document.createElement('div'); card.className='identity-card';
+    card.style.background = stk.color;
+
+    const lbl = document.createElement('div'); lbl.className='identity-card-lbl';
+    lbl.textContent = IDENTITY_LABELS[i] || '';
+    card.appendChild(lbl);
+
+    const ta = document.createElement('textarea');
+    ta.placeholder='…'; ta.value = stk.text;
+    ta.addEventListener('mousedown', e=>e.stopPropagation());
+    ta.addEventListener('touchstart', e=>e.stopPropagation(), {passive:true});
+    ta.addEventListener('input', ()=>{stk.text=ta.value; save(); autoH(ta);});
+    setTimeout(()=>autoH(ta), 0);
+    card.appendChild(ta);
+
     const cb = document.createElement('div'); cb.className='isq-color-btn'; cb.style.background=stk.color;
-    cb.addEventListener('click',e=>{e.stopPropagation();openFloatPal('identity-stk',e,hex=>{stk.color=hex;cb.style.background=hex;s.style.background=hex;save();});});
-    s.appendChild(cb);
-    board.insertBefore(s, after);
+    cb.addEventListener('click', e=>{e.stopPropagation(); openFloatPal('identity-stk',e,hex=>{stk.color=hex;cb.style.background=hex;card.style.background=hex;save();});});
+    card.appendChild(cb);
+    area.appendChild(card);
   });
+  col.appendChild(area);
+  board.insertBefore(col, board.firstChild);
 }
 
 // ── DONE COLUMN ──────────────────────────
