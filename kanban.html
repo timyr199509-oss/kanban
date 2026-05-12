@@ -2029,7 +2029,8 @@ function getStreak(hid){
 
 // ── HABITS ───────────────────────────────
 const HABIT_COLORS=['#FFEE66','#88DEFF','#99F5AA','#FF88CC','#BB99FF','#FFC28C','#FFABAB'];
-const DAY_NAMES_SHORT=['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+const DAY_NAMES_SHORT=['Вс','Пн','Вт','Ср','Чт','Пт','Сб']; // 0=Sun index
+const DAY_NAMES_WEEK=['Пн','Вт','Ср','Чт','Пт','Сб','Вс']; // Mon=0 index for week display
 
 function buildHabitsSection(override){
   const body=override||(S.activePanel==='habits'?document.getElementById('panelBody'):document.getElementById('habits-body'));if(!body)return;body.innerHTML='';
