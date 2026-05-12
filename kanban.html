@@ -749,6 +749,15 @@ body.sb-open .legend-bar { margin-left: 160px; }
 <!-- Left sidebar navigation -->
 <nav class="sidebar" id="sidebar"></nav>
 
+<!-- Side panel drawer for non-kanban sections -->
+<div class="panel-drawer" id="panelDrawer">
+  <div class="panel-hdr">
+    <span class="panel-title" id="panelTitle"></span>
+    <button class="panel-close" onclick="closePanel()">✕</button>
+  </div>
+  <div class="panel-body" id="panelBody"></div>
+</div>
+
 <div class="sections" id="sections">
   <div class="section tracker-sec" id="section-hierarchy">
     <div class="sec-hdr">
