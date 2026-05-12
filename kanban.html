@@ -1220,7 +1220,7 @@ function buildSidebar(){
     btn.className='sb-item'+(on?' sb-on':'');
     btn.title=g.label;
     btn.onclick=()=>toggleGroup(g.id);
-    btn.innerHTML=`<span class="sb-icon">${g.icon}</span><span class="sb-lbl">${g.label}</span><span class="sb-dot"></span>`;
+    btn.innerHTML=`<span class="sb-icon">${g.icon}</span><span class="sb-lblwrap"><span class="sb-lbl">${g.label}</span><span class="sb-desc">${g.desc||''}</span></span><span class="sb-dot"></span>`;
     nav.appendChild(btn);
   });
 }
