@@ -2007,6 +2007,16 @@ function last7Days(){
   for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);days.push(d.toISOString().slice(0,10));}
   return days;
 }
+function currentWeekDays(){
+  // Returns Mon–Sun of the current week
+  const today=new Date();
+  const dow=today.getDay(); // 0=Sun,1=Mon,...,6=Sat
+  const monday=new Date(today);
+  monday.setDate(today.getDate()-(dow===0?6:dow-1));
+  const days=[];
+  for(let i=0;i<7;i++){const d=new Date(monday);d.setDate(monday.getDate()+i);days.push(d.toISOString().slice(0,10));}
+  return days;
+}
 function getStreak(hid){
   let s=0;const d=new Date();
   for(;;){
