@@ -192,16 +192,101 @@ body.sb-open .legend-bar { margin-left: 160px; }
   -webkit-overflow-scrolling: touch;
   align-items: flex-start;
 }
-@media (min-width: 700px) {
+/* ── DESKTOP (≥900px) – wide boards, sidebar always visible ── */
+@media (min-width: 900px) {
   .board { overflow-x: hidden; }
   .board .col { flex: 1 !important; min-width: 0 !important; }
 }
+
+/* ── TABLET portrait (600–899px) ── */
+@media (max-width: 899px) and (min-width: 600px) {
+  .col { flex: 0 0 155px !important; }
+  .focus-sq { width: 66px; min-height: 66px; }
+  .sidebar { width: 40px; }
+  .sidebar.sb-open { width: 144px; }
+  .sections { margin-left: 40px; }
+  .legend-bar { margin-left: 40px; }
+  body.sb-open .sections { margin-left: 144px; }
+  body.sb-open .legend-bar { margin-left: 144px; }
+}
+
+/* ── MOBILE portrait (≤599px) ── */
+@media (max-width: 599px) {
+  header { padding: 0 8px; }
+  .title-in { font-size: 12px; max-width: 80px; }
+  .hdr-btn { font-size: 10px; padding: 4px 7px; }
+  #hdr-date { display: none; }
+
+  /* Sidebar: starts collapsed on mobile */
+  .sidebar { width: 38px; top: 50px; }
+  .sidebar.sb-open { width: 140px; }
+  .sb-toggle { width: 28px; height: 28px; font-size: 13px; }
+  .sb-item { width: 28px; min-height: 32px; }
+  .sidebar.sb-open .sb-item { width: 100%; }
+
+  /* Sections offset */
+  .sections { margin-left: 38px !important; }
+  .legend-bar { margin-left: 38px !important; padding: 0 6px 0 8px; }
+  body.sb-open .sections { margin-left: 140px !important; }
+  body.sb-open .legend-bar { margin-left: 140px !important; }
+
+  /* Legend compact */
+  .legend-bar { height: 22px; gap: 6px; }
+  .legend-item { font-size: 9px; gap: 3px; }
+  .ldot { width: 6px; height: 6px; }
+
+  /* Section header */
+  .sec-hdr { height: 32px; padding: 0 6px; gap: 5px; }
+  .sec-hdr-name { font-size: 9px; }
+  .sec-toggle-btn { font-size: 9px; padding: 1px 5px; }
+  .sec-archive-btn { font-size: 9px; padding: 1px 5px; }
+
+  /* Board columns – single scroll row */
+  .board { padding: 6px 4px 10px; gap: 5px; overflow-x: auto; }
+  .col { flex: 0 0 150px !important; }
+  .col-hdr { padding: 6px 7px 5px; }
+  .col-title { font-size: 10px; }
+
+  /* Focus stickers */
+  .focus-row { padding: 5px 8px 6px; gap: 4px; }
+  .yfocus-row { gap: 8px; }
+  .focus-sq { width: 62px; min-height: 62px; }
+  .focus-sq textarea { font-size: 8.5px; padding: 6px 5px 12px; min-height: 44px; }
+  .focus-row-label { font-size: 8px; min-width: 52px; }
+
+  /* Identity stickers */
+  .identity-sq { width: 60px !important; min-height: 60px !important; flex: 0 0 60px !important; }
+
+  /* Cards */
+  .card { min-height: 90px; }
+  .card textarea { font-size: 11px; }
+
+  /* Tracker sections */
+  .habits-hdr-name { min-width: 90px; }
+  .habit-name-lbl { min-width: 80px; max-width: 80px; font-size: 11px; }
+  .hday { width: 24px; height: 24px; font-size: 10px; }
+  .hday-lbl { width: 24px; font-size: 8px; }
+
+  /* Energy */
+  .energy-content { flex-direction: column; gap: 12px; }
+  .energy-lbl { min-width: 80px; font-size: 10px; }
+
+  /* Focus area in year */
+  .yfocus-row { flex-wrap: nowrap; }
+}
+
+/* ── MOBILE landscape (≤850px height & landscape) ── */
 @media (orientation: landscape) and (max-height: 500px) {
   .legend-bar { display: none; }
+  .sidebar { top: 50px; }
   .sec-hdr { height: 26px; }
-  .board { padding: 6px 6px 5px; gap: 5px; }
-  .focus-row { padding: 4px 10px 6px; }
-  .focus-sq { width: 60px; height: 60px; }
+  .board { padding: 4px 4px 4px; gap: 4px; }
+  .col { flex: 0 0 140px !important; }
+  .focus-row { padding: 3px 8px 4px; gap: 3px; }
+  .focus-sq { width: 54px; min-height: 54px; }
+  .focus-sq textarea { font-size: 8px; padding: 5px 4px 10px; min-height: 38px; }
+  .card { min-height: 70px; }
+  .card textarea { font-size: 10px; }
 }
 
 /* ── COLUMN ── */
