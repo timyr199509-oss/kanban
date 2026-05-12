@@ -2053,8 +2053,8 @@ const ENERGY_TYPES=[
   {key:'m',label:'Умственная',emoji:'🧠',color:'#3498db'},
   {key:'s',label:'Духовная',emoji:'✨',color:'#9b59b6'},
 ];
-function buildEnergySection(){
-  const body=document.getElementById('energy-body');if(!body)return;body.innerHTML='';
+function buildEnergySection(override){
+  const body=override||(S.activePanel==='energy'?document.getElementById('panelBody'):document.getElementById('energy-body'));if(!body)return;body.innerHTML='';
   if(!S.energyLog)S.energyLog={};
   const today=todayStr();
   if(!S.energyLog[today])S.energyLog[today]={p:5,e:5,m:5,s:5};
