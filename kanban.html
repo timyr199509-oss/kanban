@@ -2113,8 +2113,8 @@ function buildHierarchySection(override){
 }
 
 // ── STANDARD OF LIFE SECTION ─────────────
-function buildStandardSection(){
-  const body=document.getElementById('standard-body');if(!body)return;body.innerHTML='';
+function buildStandardSection(override){
+  const body=override||(S.activePanel==='standard'?document.getElementById('panelBody'):document.getElementById('standard-body'));if(!body)return;body.innerHTML='';
   ensureStandard();
   const row=document.createElement('div');row.className='yfocus-row';
   row.style.cssText='padding:10px 14px 16px;gap:14px;overflow-x:auto;';
