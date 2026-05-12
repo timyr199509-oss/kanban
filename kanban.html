@@ -1253,15 +1253,25 @@ function render() {
     if(sec.id==='year'){ buildYearFocusArea(); buildIdentityRow(); }
     else buildFocusRow(sec.id);
   });
-  // Trackers
-  buildHabitsSection(); buildEnergySection(); buildHierarchySection(); buildStandardSection();
-  const ALL_TRACKER_SECS=['habits','energy','hierarchy','standard'];
-  ALL_TRACKER_SECS.forEach(id=>{
-    const el=document.getElementById('section-'+id);if(!el)return;
-    const hidden=S.trackersHidden&&S.trackersHidden[id];
-    el.classList.toggle('sec-hidden',!!hidden);
-    el.querySelector('.sec-toggle-btn').textContent=hidden?'▼ Показать':'▲ Скрыть';
-  });
+  // Panel sections — rebuild if one is open
+  if(S.activePanel){
+    const panelBody=document.getElementById('panelBody');
+    const drawer=document.getElementById('panelDrawer');
+    if(panelBody&&drawer){
+      panelBody.innerHTML='';
+      if(S.activePanel==='habits')buildHabitsSection(panelBody);
+      else if(S.activePanel==='energy')buildEnergySection(panelBody);
+      else if(S.activePanel==='hierarchy')buildHierarchySection(panelBody);
+      else if(S.activePanel==='standard')buildStandardSection(panelBody);
+      drawer.classList.add('panel-open');
+      const g=SB_GROUPS.find(x=>x.id===S.activePanel);
+      const t=document.getElementById('panelTitle');
+      if(t&&g)t.textContent=g.label;
+    }
+  } else {
+    const drawer=document.getElementById('panelDrawer');
+    if(drawer)drawer.classList.remove('panel-open');
+  }
   // Update compact section header colors + names
   ['year','month','habits','energy','hierarchy','standard'].forEach(sid=>{
     const c=S.secColors[sid]||'#888';
