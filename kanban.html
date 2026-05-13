@@ -807,6 +807,10 @@ body.sb-open .legend-bar { margin-left: 160px; }
   <div class="hdr-r">
     <span id="hdr-date"></span>
     <span class="sync-status sync-ing" id="syncStatus">↑ Подключение...</span>
+    <button class="user-btn" id="userBtn" onclick="openUserModal()">
+      <span class="user-avatar" id="userAvatar" style="background:#ccc">?</span>
+      <span id="userBtnName">Выбрать</span>
+    </button>
     <button class="hdr-btn" id="balBtn" onclick="openBalance()">◎ Колесо баланса</button>
     <button class="hdr-btn" onclick="openArchive()">🗂 Архив</button>
     <button class="hdr-btn" onclick="openSettings()">⚙ Категории</button>
