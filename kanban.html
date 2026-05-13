@@ -127,12 +127,14 @@ header {
 .panel-drawer.panel-open { transform: translateX(0); }
 body.sb-open .panel-drawer { left: 160px; width: min(480px, calc(100vw - 160px)); }
 .panel-hdr {
-  height: 42px; flex-shrink: 0;
+  height: 52px; flex-shrink: 0;
   display: flex; align-items: center; padding: 0 14px; gap: 10px;
   border-bottom: 1px solid rgba(255,255,255,0.08);
   background: rgba(0,0,0,0.25);
 }
-.panel-title { flex: 1; font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.65); text-transform: uppercase; letter-spacing: 0.5px; }
+.panel-hdr-text { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.panel-title { font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.65); text-transform: uppercase; letter-spacing: 0.5px; }
+.panel-desc { font-size: 10px; color: rgba(255,255,255,0.32); font-weight: 400; }
 .panel-close {
   background: rgba(255,255,255,0.08); border: none; border-radius: 6px;
   color: rgba(255,255,255,0.5); font-size: 13px; cursor: pointer;
