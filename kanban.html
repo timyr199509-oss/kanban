@@ -2572,12 +2572,21 @@ document.getElementById('titleIn').addEventListener('input',function(){S.title=t
 // ── INIT ─────────────────────────────────
 document.getElementById('hdr-date').textContent =
   new Date().toLocaleDateString('ru-RU',{day:'numeric',month:'short',year:'numeric'});
+
+// Add Enter key support for user creation
+document.getElementById('userNewIn').addEventListener('keydown', e => { if(e.key==='Enter') createUser(); });
+
 load();
-// On first load on mobile: start with sidebar collapsed
 if(localStorage.getItem('kb7')===null && window.innerWidth<600) S.sidebarOpen=false;
 ensureFocus(); ensureWeekFocus(); ensureHierarchy(); ensureStandard(); render();
 updateSidebarLayout();
-initFirebase(); // start Firebase sync after initial render
+updateUserBtn();
+initFirebase();
+
+// Show user selection on first visit (no user selected yet)
+if (!getCurrentUser()) {
+  setTimeout(() => openUserModal(), 600);
+}
 </script>
 </body>
 </html>
