@@ -741,6 +741,14 @@ body.sb-open .legend-bar { margin-left: 160px; }
 /* ── STANDARD OF LIFE ── */
 .std-sticker-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; }
 .std-cat-lbl { font-size: 8px; font-weight: 800; color: rgba(0,0,0,0.68); padding: 2px 7px; border-radius: 10px; text-align: center; white-space: nowrap; max-width: 78px; overflow: hidden; text-overflow: ellipsis; }
+/* ── SYNC STATUS ── */
+.sync-status {
+  font-size: 10px; padding: 3px 8px; border-radius: 10px;
+  font-weight: 600; white-space: nowrap; transition: all 0.3s;
+}
+.sync-ok  { background: rgba(80,200,120,0.18); color: #5dba7d; }
+.sync-ing { background: rgba(255,200,60,0.18);  color: #c9a825; }
+.sync-err { background: rgba(220,80,80,0.18);   color: #d05050; }
 </style>
 </head>
 <body>
