@@ -1058,7 +1058,72 @@ let floatPalTarget=null, floatPalCallback=null;
 
 // ── STORAGE ──────────────────────────────
 const STORE_KEY = 'kb7';
-function save() { localStorage.setItem(STORE_KEY, JSON.stringify(S)); }
+
+// ── FIREBASE ─────────────────────────────
+const FB_CONFIG = {
+  apiKey: "AIzaSyDFqbs_8e34FDUMIatZxGWbWtK4OK813z0",
+  authDomain: "kanbant-1c059.firebaseapp.com",
+  projectId: "kanbant-1c059",
+  storageBucket: "kanbant-1c059.firebasestorage.app",
+  messagingSenderId: "638771004851",
+  appId: "1:638771004851:web:d72624987b284d5297b7c6"
+};
+let db = null;
+let fbSaveTimer = null;
+let remoteApplying = false; // guard against echo-loops
+
+function syncStatus(s, txt) {
+  const el = document.getElementById('syncStatus'); if (!el) return;
+  el.textContent = txt; el.className = 'sync-status ' + s;
+}
+
+function initFirebase() {
+  try {
+    firebase.initializeApp(FB_CONFIG);
+    db = firebase.firestore();
+    // Real-time listener — fires immediately with current data, then on every remote change
+    db.collection('kanban').doc('state').onSnapshot(snap => {
+      if (remoteApplying) return;
+      if (!snap.exists) { syncStatus('sync-ok', '✓ Онлайн'); return; }
+      const remote = snap.data();
+      if (!remote || !remote.data) return;
+      const remoteTs = remote.ts || 0;
+      const localTs  = S._ts  || 0;
+      if (remoteTs > localTs) {
+        remoteApplying = true;
+        try {
+          const d = JSON.parse(remote.data);
+          Object.assign(S, d);
+          localStorage.setItem(STORE_KEY, remote.data);
+          render();
+          syncStatus('sync-ok', '✓ Синхронизировано');
+        } catch(e) {}
+        remoteApplying = false;
+      } else {
+        syncStatus('sync-ok', '✓ Синхронизировано');
+      }
+    }, () => syncStatus('sync-err', '⚠ Офлайн'));
+  } catch(e) {
+    syncStatus('sync-err', '⚠ Нет соединения');
+  }
+}
+
+function saveToFirebase() {
+  if (!db || remoteApplying) return;
+  S._ts = Date.now();
+  db.collection('kanban').doc('state')
+    .set({ data: JSON.stringify(S), ts: S._ts })
+    .then(() => syncStatus('sync-ok', '✓ Сохранено'))
+    .catch(() => syncStatus('sync-err', '⚠ Ошибка сохранения'));
+}
+
+function save() {
+  localStorage.setItem(STORE_KEY, JSON.stringify(S));
+  syncStatus('sync-ing', '↑ Сохранение...');
+  clearTimeout(fbSaveTimer);
+  fbSaveTimer = setTimeout(saveToFirebase, 800); // debounce — пишем в Firebase через 0.8 сек после последнего изменения
+}
+
 function load() {
   try {
     const d = JSON.parse(localStorage.getItem(STORE_KEY)||'null');
