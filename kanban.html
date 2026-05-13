@@ -1319,7 +1319,9 @@ function save() {
 
 function load() {
   try {
-    const d = JSON.parse(localStorage.getItem(STORE_KEY)||'null');
+    const u = getCurrentUser();
+    const raw = u ? (localStorage.getItem(userStoreKey(u)) || localStorage.getItem(STORE_KEY)) : localStorage.getItem(STORE_KEY);
+    const d = JSON.parse(raw||'null');
     if (!d) return;
     const merge = (key, def) => S[key] = (d[key] !== undefined ? d[key] : def);
     merge('title',        'Kanban');
