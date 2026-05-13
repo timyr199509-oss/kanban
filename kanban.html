@@ -1195,6 +1195,8 @@ function openPanel(id){
   if(!drawer||!body)return;
   const g=SB_GROUPS.find(x=>x.id===id);
   if(title)title.textContent=(g?g.label:'');
+  const descEl=document.getElementById('panelDesc');
+  if(descEl)descEl.textContent=(g&&g.hint?g.hint:'');
   body.innerHTML='';
   if(id==='habits')buildHabitsSection(body);
   else if(id==='energy')buildEnergySection(body);
