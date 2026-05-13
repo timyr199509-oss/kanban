@@ -1124,6 +1124,123 @@ let floatPalTarget=null, floatPalCallback=null;
 // ── STORAGE ──────────────────────────────
 const STORE_KEY = 'kb7';
 
+// ── USERS ─────────────────────────────────
+const USERS_KEY = 'kb7_users';
+const CUR_USER_KEY = 'kb7_cur';
+const USER_COLORS = ['#FFD966','#88DEFF','#99F5AA','#FF88CC','#BB99FF','#FFC28C','#FFABAB','#FFFBDD'];
+
+function getKnownUsers() {
+  try { return JSON.parse(localStorage.getItem(USERS_KEY)||'[]'); } catch { return []; }
+}
+function saveKnownUsers(arr) { localStorage.setItem(USERS_KEY, JSON.stringify(arr)); }
+function getCurrentUser() { return localStorage.getItem(CUR_USER_KEY)||null; }
+function userStoreKey(uid) { return 'kb7_'+uid; }
+function userColor(name) {
+  let h=0; for(let i=0;i<name.length;i++)h=(h*31+name.charCodeAt(i))%USER_COLORS.length;
+  return USER_COLORS[h];
+}
+function userInitial(name) { return name.trim().charAt(0).toUpperCase()||'?'; }
+
+function updateUserBtn() {
+  const u = getCurrentUser();
+  const btn = document.getElementById('userBtn');
+  const av  = document.getElementById('userAvatar');
+  const nm  = document.getElementById('userBtnName');
+  if (!btn) return;
+  if (u) {
+    av.textContent = userInitial(u);
+    av.style.background = userColor(u);
+    nm.textContent = u;
+    btn.style.borderColor = userColor(u)+'88';
+  } else {
+    av.textContent = '?'; av.style.background = '#888';
+    nm.textContent = 'Выбрать';
+    btn.style.borderColor = '';
+  }
+}
+
+function openUserModal() {
+  const u = getCurrentUser();
+  document.getElementById('userModalTitle').textContent = u ? 'Сменить профиль' : 'Кто ты?';
+  document.getElementById('userNewIn').value = '';
+  renderUserList();
+  openOv('ovUser');
+}
+
+function renderUserList() {
+  const list = document.getElementById('userList'); list.innerHTML = '';
+  const users = getKnownUsers();
+  const cur = getCurrentUser();
+  if (!users.length) { list.innerHTML = '<div style="font-size:12px;color:#aaa;text-align:center;padding:8px 0">Пока нет профилей — создай первый ниже</div>'; return; }
+  users.forEach(u => {
+    const row = document.createElement('button'); row.className = 'user-pick-btn';
+    if (u === cur) row.style.borderColor = userColor(u);
+    const av = document.createElement('div'); av.className = 'user-pick-avatar';
+    av.textContent = userInitial(u); av.style.background = userColor(u);
+    const nm = document.createElement('span'); nm.textContent = u;
+    if (u === cur) { const ck = document.createElement('span'); ck.textContent = ' ✓'; ck.style.color='#2a9'; nm.appendChild(ck); }
+    const del = document.createElement('button'); del.className = 'user-pick-del'; del.textContent = '✕';
+    del.title = 'Удалить профиль';
+    del.addEventListener('click', e => { e.stopPropagation(); deleteUser(u); });
+    row.appendChild(av); row.appendChild(nm); row.appendChild(del);
+    row.addEventListener('click', () => switchToUser(u));
+    list.appendChild(row);
+  });
+}
+
+function createUser() {
+  const name = document.getElementById('userNewIn').value.trim();
+  if (!name) return;
+  const users = getKnownUsers();
+  if (!users.includes(name)) { users.push(name); saveKnownUsers(users); }
+  switchToUser(name);
+}
+
+function deleteUser(name) {
+  if (!confirm(`Удалить профиль "${name}"?\nДанные этого профиля будут удалены с этого устройства.`)) return;
+  const users = getKnownUsers().filter(u => u !== name);
+  saveKnownUsers(users);
+  localStorage.removeItem(userStoreKey(name));
+  if (getCurrentUser() === name) {
+    localStorage.removeItem(CUR_USER_KEY);
+    if (users.length) switchToUser(users[0]);
+    else { renderUserList(); updateUserBtn(); }
+  } else { renderUserList(); }
+}
+
+function switchToUser(name) {
+  // Save current user's state first
+  const prev = getCurrentUser();
+  if (prev) localStorage.setItem(userStoreKey(prev), JSON.stringify(S));
+  // Switch
+  localStorage.setItem(CUR_USER_KEY, name);
+  // Reset S to defaults then load this user's data
+  Object.assign(S, defaultState());
+  const saved = localStorage.getItem(userStoreKey(name));
+  if (saved) try { const d=JSON.parse(saved); Object.assign(S,d); } catch{}
+  ensureFocus(); ensureWeekFocus(); ensureHierarchy(); ensureStandard();
+  closeOv('ovUser');
+  render();
+  updateUserBtn();
+  startUserListener(name); // connect Firebase for this user
+}
+
+function defaultState() {
+  return {
+    title:'Kanban', cards:[], categories:DEFAULT_CATS.map(c=>({...c})),
+    colTitles:{}, doneOpen:{}, hidden:{year:false,month:false}, yearHeight:370,
+    balanceTitle:'Колесо баланса', balanceScores:{},
+    focusStickers:{year:null,month:null}, weekStickers:null, identityStickers:null,
+    yearFocuses:[], focusArchives:[],
+    secColors:{year:'#FFFBDD',month:'#FFFBDD',habits:'#CCFF88',energy:'#88DEFF',hierarchy:'#FFD9A0',standard:'#E8D5FF'},
+    secNames:{year:'Канбан года',month:'Канбан месяца',habits:'Привычки',energy:'Энергия',hierarchy:'Иерархия целей',standard:'Стандарт жизни'},
+    sectionOrder:['hierarchy','habits','energy','year','standard','month'],
+    sidebarOpen:true, activePanel:null, archives:[], habits:[], habitChecks:{},
+    energyLog:{}, trackersHidden:{habits:false,energy:false,hierarchy:false,standard:false},
+    hierarchyGoals:null, standardStickers:null,
+  };
+}
+
 // ── FIREBASE ─────────────────────────────
 const FB_CONFIG = {
   apiKey: "AIzaSyDFqbs_8e34FDUMIatZxGWbWtK4OK813z0",
@@ -1135,39 +1252,48 @@ const FB_CONFIG = {
 };
 let db = null;
 let fbSaveTimer = null;
-let remoteApplying = false; // guard against echo-loops
+let remoteApplying = false;
+let fbUnsubscribe = null;
 
 function syncStatus(s, txt) {
   const el = document.getElementById('syncStatus'); if (!el) return;
   el.textContent = txt; el.className = 'sync-status ' + s;
 }
 
+function fbDoc(userId) {
+  return db.collection('kanban').doc(userId || 'default');
+}
+
+function startUserListener(userId) {
+  if (fbUnsubscribe) { fbUnsubscribe(); fbUnsubscribe = null; }
+  if (!db || !userId) return;
+  fbUnsubscribe = fbDoc(userId).onSnapshot(snap => {
+    if (remoteApplying) return;
+    if (!snap.exists) { syncStatus('sync-ok', '✓ Онлайн'); return; }
+    const remote = snap.data();
+    if (!remote || !remote.data) return;
+    if ((remote.ts||0) > (S._ts||0)) {
+      remoteApplying = true;
+      try {
+        const d = JSON.parse(remote.data);
+        Object.assign(S, d);
+        localStorage.setItem(userStoreKey(userId), remote.data);
+        render(); syncStatus('sync-ok', '✓ Синхронизировано');
+      } catch(e) {}
+      remoteApplying = false;
+    } else {
+      syncStatus('sync-ok', '✓ Синхронизировано');
+    }
+  }, () => syncStatus('sync-err', '⚠ Офлайн'));
+}
+
 function initFirebase() {
   try {
     firebase.initializeApp(FB_CONFIG);
     db = firebase.firestore();
-    // Real-time listener — fires immediately with current data, then on every remote change
-    db.collection('kanban').doc('state').onSnapshot(snap => {
-      if (remoteApplying) return;
-      if (!snap.exists) { syncStatus('sync-ok', '✓ Онлайн'); return; }
-      const remote = snap.data();
-      if (!remote || !remote.data) return;
-      const remoteTs = remote.ts || 0;
-      const localTs  = S._ts  || 0;
-      if (remoteTs > localTs) {
-        remoteApplying = true;
-        try {
-          const d = JSON.parse(remote.data);
-          Object.assign(S, d);
-          localStorage.setItem(STORE_KEY, remote.data);
-          render();
-          syncStatus('sync-ok', '✓ Синхронизировано');
-        } catch(e) {}
-        remoteApplying = false;
-      } else {
-        syncStatus('sync-ok', '✓ Синхронизировано');
-      }
-    }, () => syncStatus('sync-err', '⚠ Офлайн'));
+    const u = getCurrentUser();
+    if (u) startUserListener(u);
+    else syncStatus('sync-ok', '✓ Онлайн');
   } catch(e) {
     syncStatus('sync-err', '⚠ Нет соединения');
   }
@@ -1175,18 +1301,20 @@ function initFirebase() {
 
 function saveToFirebase() {
   if (!db || remoteApplying) return;
+  const u = getCurrentUser(); if (!u) return;
   S._ts = Date.now();
-  db.collection('kanban').doc('state')
-    .set({ data: JSON.stringify(S), ts: S._ts })
+  fbDoc(u).set({ data: JSON.stringify(S), ts: S._ts })
     .then(() => syncStatus('sync-ok', '✓ Сохранено'))
     .catch(() => syncStatus('sync-err', '⚠ Ошибка сохранения'));
 }
 
 function save() {
-  localStorage.setItem(STORE_KEY, JSON.stringify(S));
+  const u = getCurrentUser();
+  if (u) localStorage.setItem(userStoreKey(u), JSON.stringify(S));
+  localStorage.setItem(STORE_KEY, JSON.stringify(S)); // legacy fallback
   syncStatus('sync-ing', '↑ Сохранение...');
   clearTimeout(fbSaveTimer);
-  fbSaveTimer = setTimeout(saveToFirebase, 800); // debounce — пишем в Firebase через 0.8 сек после последнего изменения
+  fbSaveTimer = setTimeout(saveToFirebase, 800);
 }
 
 function load() {
