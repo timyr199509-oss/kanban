@@ -2382,6 +2382,7 @@ load();
 if(localStorage.getItem('kb7')===null && window.innerWidth<600) S.sidebarOpen=false;
 ensureFocus(); ensureWeekFocus(); ensureHierarchy(); ensureStandard(); render();
 updateSidebarLayout();
+initFirebase(); // start Firebase sync after initial render
 </script>
 </body>
 </html>
