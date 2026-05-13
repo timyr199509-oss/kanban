@@ -904,6 +904,20 @@ body.sb-open .legend-bar { margin-left: 160px; }
   </div>
 </div>
 
+<!-- User select modal -->
+<div class="overlay" id="ovUser">
+  <div class="modal">
+    <div class="m-handle"></div>
+    <h3 id="userModalTitle">Кто ты?</h3>
+    <div class="user-list" id="userList"></div>
+    <div class="user-divider">— или создай новый профиль —</div>
+    <div class="user-new-row" style="margin-top:8px">
+      <input class="user-new-in" id="userNewIn" type="text" placeholder="Имя..." maxlength="20">
+      <button class="user-new-btn" onclick="createUser()">Создать</button>
+    </div>
+  </div>
+</div>
+
 <!-- Card popup -->
 <div id="cardPopup">
   <div class="cp-colors" id="cpColors"></div>
