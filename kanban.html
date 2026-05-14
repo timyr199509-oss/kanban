@@ -827,6 +827,11 @@ body.sb-open .legend-bar { margin-left: 160px; }
   </div>
   <div class="hdr-r">
     <span id="hdr-date"></span>
+    <div class="zoom-ctrl">
+      <button class="zoom-btn" onclick="changeZoom(-10)" title="Уменьшить">−</button>
+      <span class="zoom-val" id="zoomVal" onclick="resetZoom()" title="Сбросить до 100%">100%</span>
+      <button class="zoom-btn" onclick="changeZoom(+10)" title="Увеличить">+</button>
+    </div>
     <span class="sync-status sync-ing" id="syncStatus">↑ Подключение...</span>
     <button class="user-btn" id="userBtn" onclick="openUserModal()">
       <span class="user-avatar" id="userAvatar" style="background:#ccc">?</span>
