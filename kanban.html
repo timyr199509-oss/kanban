@@ -55,6 +55,27 @@ header {
 }
 .hdr-btn:active { background: rgba(255,255,255,0.2); color: #fff; }
 
+/* ── ZOOM CONTROL ── */
+.zoom-ctrl {
+  display: flex; align-items: center; gap: 2px;
+  background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 7px; overflow: hidden;
+}
+.zoom-btn {
+  background: none; border: none; color: rgba(255,255,255,0.6);
+  font-size: 14px; font-weight: 700; cursor: pointer;
+  width: 24px; height: 28px; display: flex; align-items: center; justify-content: center;
+  transition: background 0.12s, color 0.12s; line-height: 1;
+}
+.zoom-btn:hover { background: rgba(255,255,255,0.14); color: #fff; }
+.zoom-btn:active { background: rgba(255,255,255,0.22); }
+.zoom-val {
+  font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.6);
+  min-width: 34px; text-align: center; cursor: pointer; padding: 0 2px;
+  user-select: none;
+}
+.zoom-val:hover { color: #fff; }
+
 /* ── LEGEND ── */
 .legend-bar {
   height: 27px; flex-shrink: 0;
