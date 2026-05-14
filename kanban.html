@@ -1209,20 +1209,18 @@ function deleteUser(name) {
 }
 
 function switchToUser(name) {
-  // Save current user's state first
   const prev = getCurrentUser();
   if (prev) localStorage.setItem(userStoreKey(prev), JSON.stringify(S));
-  // Switch
   localStorage.setItem(CUR_USER_KEY, name);
-  // Reset S to defaults then load this user's data
   Object.assign(S, defaultState());
-  const saved = localStorage.getItem(userStoreKey(name));
+  // Try user-specific key first, then fall back to legacy 'kb7' key
+  const saved = localStorage.getItem(userStoreKey(name)) || localStorage.getItem(STORE_KEY);
   if (saved) try { const d=JSON.parse(saved); Object.assign(S,d); } catch{}
   ensureFocus(); ensureWeekFocus(); ensureHierarchy(); ensureStandard();
   closeOv('ovUser');
   render();
   updateUserBtn();
-  startUserListener(name); // connect Firebase for this user
+  startUserListener(name);
 }
 
 function defaultState() {
