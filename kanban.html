@@ -1262,23 +1262,42 @@ function fbDoc(userId) {
   return db.collection('kanban').doc(userId || 'default');
 }
 
+function applyRemoteData(userId, data) {
+  remoteApplying = true;
+  try {
+    const d = JSON.parse(data);
+    Object.assign(S, d);
+    localStorage.setItem(userStoreKey(userId), data);
+    render(); syncStatus('sync-ok', '✓ Синхронизировано');
+  } catch(e) {}
+  remoteApplying = false;
+}
+
 function startUserListener(userId) {
   if (fbUnsubscribe) { fbUnsubscribe(); fbUnsubscribe = null; }
   if (!db || !userId) return;
   fbUnsubscribe = fbDoc(userId).onSnapshot(snap => {
     if (remoteApplying) return;
-    if (!snap.exists) { syncStatus('sync-ok', '✓ Онлайн'); return; }
+    if (!snap.exists) {
+      // User doc empty — try to migrate from legacy 'state' doc
+      syncStatus('sync-ing', '↑ Поиск данных...');
+      db.collection('kanban').doc('state').get().then(legSnap => {
+        if (legSnap.exists) {
+          const leg = legSnap.data();
+          if (leg && leg.data) {
+            // Copy legacy data into this user's doc
+            fbDoc(userId).set({ data: leg.data, ts: Date.now() });
+            applyRemoteData(userId, leg.data);
+            syncStatus('sync-ok', '✓ Данные восстановлены');
+          } else { syncStatus('sync-ok', '✓ Онлайн'); }
+        } else { syncStatus('sync-ok', '✓ Онлайн'); }
+      }).catch(() => syncStatus('sync-ok', '✓ Онлайн'));
+      return;
+    }
     const remote = snap.data();
     if (!remote || !remote.data) return;
     if ((remote.ts||0) > (S._ts||0)) {
-      remoteApplying = true;
-      try {
-        const d = JSON.parse(remote.data);
-        Object.assign(S, d);
-        localStorage.setItem(userStoreKey(userId), remote.data);
-        render(); syncStatus('sync-ok', '✓ Синхронизировано');
-      } catch(e) {}
-      remoteApplying = false;
+      applyRemoteData(userId, remote.data);
     } else {
       syncStatus('sync-ok', '✓ Синхронизировано');
     }
