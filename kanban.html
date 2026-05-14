@@ -1579,9 +1579,26 @@ function getCompletionScores() {
 }
 
 // ── RENDER ───────────────────────────────
+// ── ZOOM ─────────────────────────────────
+function applyZoom() {
+  const z = Math.max(50, Math.min(150, S.zoom || 100));
+  S.zoom = z;
+  document.getElementById('sections').style.zoom = z / 100;
+  const pd = document.getElementById('panelDrawer');
+  if (pd) pd.style.zoom = z / 100;
+  const zv = document.getElementById('zoomVal');
+  if (zv) zv.textContent = z + '%';
+}
+function changeZoom(delta) {
+  S.zoom = Math.max(50, Math.min(150, (S.zoom || 100) + delta));
+  applyZoom(); save();
+}
+function resetZoom() { S.zoom = 100; applyZoom(); save(); }
+
 function render() {
   document.getElementById('titleIn').value = S.title;
   document.getElementById('balBtn').textContent = '◎ '+(S.balanceTitle||'Колесо баланса');
+  applyZoom();
   renderLegend();
   applySecStates();
   ensureFocus(); ensureWeekFocus(); ensureYearFocus(); ensureIdentity(); ensureHierarchy(); ensureStandard();
