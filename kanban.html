@@ -2570,11 +2570,13 @@ function buildSubtasks(cardEl,card){
       const item=document.createElement('div');item.className='stask';
       const cb=document.createElement('div');cb.className='stask-cb'+(stask.done?' ck':'');
       cb.addEventListener('click',e=>{e.stopPropagation();stask.done=!stask.done;save();refreshSubtasks(cardEl,card);});
-      const inp=document.createElement('input');inp.type='text';inp.className='stask-in'+(stask.done?' ck':'');
-      inp.value=stask.text;inp.placeholder='Подзадача...';
+      const inp=document.createElement('textarea');inp.className='stask-in'+(stask.done?' ck':'');
+      inp.value=stask.text;inp.placeholder='Подзадача...';inp.rows=1;
       inp.addEventListener('mousedown',e=>e.stopPropagation());
       inp.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true});
-      inp.addEventListener('input',()=>{stask.text=inp.value;save();});
+      inp.addEventListener('input',()=>{stask.text=inp.value;autoH(inp);save();});
+      inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();}});
+      setTimeout(()=>autoH(inp),0);
       const x=document.createElement('button');x.className='stask-x';x.textContent='✕';
       x.addEventListener('click',e=>{e.stopPropagation();card.subtasks=card.subtasks.filter(s=>s.id!==stask.id);save();refreshSubtasks(cardEl,card);});
       item.appendChild(cb);item.appendChild(inp);item.appendChild(x);list.appendChild(item);
