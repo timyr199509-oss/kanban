@@ -2565,6 +2565,7 @@ function buildSubtasks(cardEl,card){
       cb.addEventListener('click',e=>{e.stopPropagation();stask.done=!stask.done;save();refreshSubtasks(cardEl,card);});
       const inp=document.createElement('div');
       inp.contentEditable='plaintext-only';
+      inp.draggable=false;
       inp.className='stask-in'+(stask.done?' ck':'');
       inp.setAttribute('data-ph','Подзадача...');
       inp.textContent=stask.text;
