@@ -1585,9 +1585,14 @@ function getCompletionScores() {
 function applyZoom() {
   const z = Math.max(50, Math.min(150, S.zoom || 100));
   S.zoom = z;
-  document.getElementById('sections').style.zoom = z / 100;
-  const pd = document.getElementById('panelDrawer');
-  if (pd) pd.style.zoom = z / 100;
+  // Apply zoom to individual sections, NOT the container.
+  // Zooming the container shifts CSS hit-test coordinates vs visual positions
+  // causing clicks to miss at lower zoom levels.
+  const zVal = z / 100;
+  document.querySelectorAll('#sections > .section').forEach(sec => {
+    sec.style.zoom = zVal === 1 ? '' : zVal;
+  });
+  // panelDrawer is position:fixed — don't zoom it, it breaks positioning
   const zv = document.getElementById('zoomVal');
   if (zv) zv.textContent = z + '%';
 }
