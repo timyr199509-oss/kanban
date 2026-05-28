@@ -1714,13 +1714,15 @@ function buildCard(card, secId, inDone) {
 
   const ta=document.createElement('textarea');
   ta.placeholder='...'; ta.value=card.text||'';
-  ta.draggable=false; // prevent textarea from triggering card drag
+  ta.draggable=false;
+  ta.addEventListener('mousedown',e=>e.stopPropagation()); // prevent drag from textarea
   ta.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true});
   ta.addEventListener('input',()=>{card.text=ta.value;save();autoH(ta);});
   setTimeout(()=>autoH(ta),0);
   el.appendChild(ta);
 
   const mb=document.createElement('button'); mb.className='card-menu-btn'; mb.textContent='···';
+  mb.addEventListener('mousedown',e=>e.stopPropagation()); // prevent drag from button
   mb.addEventListener('click',e=>{e.stopPropagation();showCardPopup(card.id,secId,inDone,mb);});
   el.appendChild(mb);
   buildSubtasks(el, card);
@@ -1730,12 +1732,10 @@ function buildCard(card, secId, inDone) {
   el.addEventListener('touchend',()=>clearTimeout(pressT));
 
   el.addEventListener('dragstart',e=>{
-    // Don't drag if starting from textarea, button, or contenteditable subtask
-    if(e.target.tagName==='TEXTAREA'||e.target.tagName==='BUTTON'||e.target.contentEditable==='true'||e.target.contentEditable==='plaintext-only'){e.preventDefault();return;}
     e.stopPropagation();dragId=card.id;setTimeout(()=>el.classList.add('dragging'),0);
   });
   el.addEventListener('dragend',()=>{
-    el.draggable=false; el.classList.remove('dragging'); dragId=null;
+    el.draggable=!inDone; el.classList.remove('dragging'); dragId=null;
     document.querySelectorAll('.drag-over,.sec-dragging,.sec-drag-over').forEach(x=>x.classList.remove('drag-over','sec-dragging','sec-drag-over'));
   });
   return el;
