@@ -1041,6 +1041,22 @@ body.sb-open .legend-bar { margin-left: 160px; }
   </div>
 </div>
 
+<!-- Month close choice modal -->
+<div class="overlay" id="ovMonthClose">
+  <div class="modal" style="text-align:center;max-width:320px">
+    <div class="m-handle"></div>
+    <h3>📦 Закрыть месяц</h3>
+    <p style="font-size:13px;color:#777;margin-bottom:18px">Какой месяц архивировать?</p>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+      <button class="move-opt" id="mcPrevBtn" style="background:#FFFBDD;border-color:#e8d800"></button>
+      <button class="move-opt" id="mcCurBtn"></button>
+    </div>
+    <div class="m-actions">
+      <button class="btn-cancel" onclick="closeOv('ovMonthClose')">Отмена</button>
+    </div>
+  </div>
+</div>
+
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
