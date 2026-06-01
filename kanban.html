@@ -1585,16 +1585,29 @@ function getCompletionScores() {
 function applyZoom() {
   const z = Math.max(50, Math.min(150, S.zoom || 100));
   S.zoom = z;
-  // Apply zoom to individual sections, NOT the container.
-  // Zooming the container shifts CSS hit-test coordinates vs visual positions
-  // causing clicks to miss at lower zoom levels.
-  const zVal = z / 100;
-  document.querySelectorAll('#sections > .section').forEach(sec => {
-    sec.style.zoom = zVal === 1 ? '' : zVal;
-  });
-  // panelDrawer is position:fixed — don't zoom it, it breaks positioning
   const zv = document.getElementById('zoomVal');
   if (zv) zv.textContent = z + '%';
+  applySectionsScale();
+}
+// Use transform:scale() instead of CSS zoom — transform has correct hit-testing
+// at all scale values, while CSS zoom misaligns click areas in some Chrome versions.
+function applySectionsScale() {
+  const sections = document.getElementById('sections');
+  if (!sections) return;
+  const scale = (S.zoom || 100) / 100;
+  // Clear any leftover individual-section zooms from old implementation
+  sections.querySelectorAll('.section').forEach(s => { s.style.zoom = ''; });
+  // Reset transform + margin to read natural height
+  sections.style.transform = '';
+  sections.style.marginBottom = '';
+  sections.style.transformOrigin = '';
+  if (scale === 1) return;
+  // Measure natural (unscaled) height AFTER resetting
+  const naturalH = sections.scrollHeight;
+  sections.style.transformOrigin = '0 0';
+  sections.style.transform = `scale(${scale})`;
+  // Collapse the extra layout space so page scroll height stays correct
+  sections.style.marginBottom = Math.round(naturalH * (scale - 1)) + 'px';
 }
 function changeZoom(delta) {
   S.zoom = Math.max(50, Math.min(150, (S.zoom || 100) + delta));
