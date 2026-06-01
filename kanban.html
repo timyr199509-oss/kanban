@@ -1618,7 +1618,9 @@ function resetZoom() { S.zoom = 100; applyZoom(); save(); }
 function render() {
   document.getElementById('titleIn').value = S.title;
   document.getElementById('balBtn').textContent = '◎ '+(S.balanceTitle||'Колесо баланса');
-  applyZoom();
+  // Just update label; scale is applied at end of render once content is built
+  const _zv = document.getElementById('zoomVal');
+  if (_zv) _zv.textContent = (S.zoom || 100) + '%';
   renderLegend();
   applySecStates();
   ensureFocus(); ensureWeekFocus(); ensureYearFocus(); ensureIdentity(); ensureHierarchy(); ensureStandard();
