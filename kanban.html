@@ -2106,15 +2106,28 @@ function openSettings(){
 const MONTHS_RU = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 
 function closeMonth(){
-  const doneCards=S.cards.filter(c=>c.col==='m-done');
   const now=new Date();
-  const label=MONTHS_RU[now.getMonth()]+' '+now.getFullYear();
+  const curM=now.getMonth(), curY=now.getFullYear();
+  const prevDate=new Date(curY,curM-1,1);
+  const prevM=prevDate.getMonth(), prevY=prevDate.getFullYear();
+  const prevLabel=MONTHS_RU[prevM]+' '+prevY;
+  const curLabel=MONTHS_RU[curM]+' '+curY;
+  // Show month-choice modal
+  document.getElementById('mcPrevBtn').textContent='← '+prevLabel+' (прошлый)';
+  document.getElementById('mcPrevBtn').onclick=()=>{closeOv('ovMonthClose');doCloseMonth(prevM+1,prevY);};
+  document.getElementById('mcCurBtn').textContent=curLabel+' (текущий)';
+  document.getElementById('mcCurBtn').onclick=()=>{closeOv('ovMonthClose');doCloseMonth(curM+1,curY);};
+  openOv('ovMonthClose');
+}
+function doCloseMonth(monthNum,year){
+  const label=MONTHS_RU[monthNum-1]+' '+year;
+  const doneCards=S.cards.filter(c=>c.col==='m-done');
   const msg=doneCards.length>0
     ?`Архивировать "${label}"?\n✓ ${doneCards.length} выполненных задач будет сохранено в архив.\nНевыполненные задачи останутся на доске.`
     :`В колонке "Сделано" нет задач.\nВсё равно создать архивную запись для "${label}"?`;
   if(!confirm(msg))return;
   const archive={
-    id:uid(), label, month:now.getMonth()+1, year:now.getFullYear(),
+    id:uid(), label, month:monthNum, year,
     cards:doneCards.map(c=>({...c})),
     categories:S.categories.map(c=>({...c})),
     colTitles:{...S.colTitles},
