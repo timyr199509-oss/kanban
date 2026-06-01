@@ -1664,6 +1664,8 @@ function render() {
   applySecOrder();
   // Sidebar
   buildSidebar(); updateSidebarLayout();
+  // Apply scale AFTER content is built so scrollHeight is accurate
+  applySectionsScale();
 }
 
 function renderLegend() {
