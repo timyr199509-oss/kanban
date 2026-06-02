@@ -1372,7 +1372,10 @@ function save() {
 function load() {
   try {
     const u = getCurrentUser();
-    const raw = u ? (localStorage.getItem(userStoreKey(u)) || localStorage.getItem(STORE_KEY)) : localStorage.getItem(STORE_KEY);
+    // If a profile is selected, load ONLY its own data (no legacy fallback,
+    // which would leak another user's data). Legacy 'kb7' is used only on
+    // the very first boot before any profile exists.
+    const raw = u ? localStorage.getItem(userStoreKey(u)) : localStorage.getItem(STORE_KEY);
     const d = JSON.parse(raw||'null');
     if (!d) return;
     const merge = (key, def) => S[key] = (d[key] !== undefined ? d[key] : def);
