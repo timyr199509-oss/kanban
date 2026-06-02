@@ -1599,25 +1599,20 @@ function applyZoom() {
   if (zv) zv.textContent = z + '%';
   applySectionsScale();
 }
-// Use transform:scale() instead of CSS zoom — transform has correct hit-testing
-// at all scale values, while CSS zoom misaligns click areas in some Chrome versions.
+// Use CSS `zoom` — it reflows content into the scaled space (no dead area or
+// off-screen columns). transform:scale() does NOT reflow and broke the layout.
+// The popup that used to "fly off" under zoom is now a centered modal, so the
+// old zoom/coordinate mismatch no longer matters.
 function applySectionsScale() {
   const sections = document.getElementById('sections');
   if (!sections) return;
-  const scale = (S.zoom || 100) / 100;
-  // Clear any leftover individual-section zooms from old implementation
-  sections.querySelectorAll('.section').forEach(s => { s.style.zoom = ''; });
-  // Reset transform + margin to read natural height
+  // Clear any transform-based scaling left over from the previous approach
   sections.style.transform = '';
   sections.style.marginBottom = '';
   sections.style.transformOrigin = '';
-  if (scale === 1) return;
-  // Measure natural (unscaled) height AFTER resetting
-  const naturalH = sections.scrollHeight;
-  sections.style.transformOrigin = '0 0';
-  sections.style.transform = `scale(${scale})`;
-  // Collapse the extra layout space so page scroll height stays correct
-  sections.style.marginBottom = Math.round(naturalH * (scale - 1)) + 'px';
+  sections.querySelectorAll('.section').forEach(s => { s.style.zoom = ''; });
+  const z = (S.zoom || 100) / 100;
+  sections.style.zoom = z === 1 ? '' : z;
 }
 function changeZoom(delta) {
   S.zoom = Math.max(50, Math.min(150, (S.zoom || 100) + delta));
