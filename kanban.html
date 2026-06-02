@@ -2250,25 +2250,40 @@ function buildMonthArchItem(arch){
   item.appendChild(hdr);
   const body=document.createElement('div');body.className='arch-body';
   const cats=arch.categories||S.categories;const catMap={};cats.forEach(c=>catMap[c.id]=c);
+  // Restored done-cards go back to the "Сделано" column (not "Нужно сделать"),
+  // so they never mix with the active month's tasks.
+  const destCol = arch.month ? 'm-done' : 'y-done';
   if(arch.cards.length){
+    // ── Restore-all button (one tap returns the whole closed month) ──
+    const allBtn=document.createElement('button');allBtn.className='arch-restore-all';
+    allBtn.textContent=`↩ Вернуть все задачи (${arch.cards.length}) в «Сделано»`;
+    allBtn.addEventListener('click',e=>{
+      e.stopPropagation();
+      if(!confirm(`Вернуть все ${arch.cards.length} задач из "${arch.label}" обратно в колонку «Сделано»?\nАрхивная запись будет удалена.`))return;
+      arch.cards.forEach(card=>S.cards.push({...card, col: destCol, rot: rot()}));
+      S.archives=S.archives.filter(a=>a.id!==arch.id);
+      if(arch.month) S.doneOpen['m-done']=true; else S.doneOpen['y-done']=true;
+      save(); render(); renderArchiveList();
+      showInfoToast(`${arch.label}: все задачи возвращены в «Сделано»`);
+    });
+    body.appendChild(allBtn);
     const cl=document.createElement('div');cl.className='arch-cards';
     arch.cards.forEach(card=>{
       const c=catMap[card.catId]||{color:'#ccc'};
       const el=document.createElement('div');el.className='arch-card-item';
       el.style.borderLeftColor=c.color;
       const txt=document.createElement('span');txt.className='arch-card-text';txt.textContent=card.text||'(без текста)';
-      // Restore button
+      // Restore button — returns one card to the "Сделано" column
       const rb=document.createElement('button');rb.className='arch-card-restore';rb.textContent='↩ Вернуть';
-      rb.title='Вернуть карточку на доску';
+      rb.title='Вернуть карточку в «Сделано»';
       rb.addEventListener('click',e=>{
         e.stopPropagation();
-        // Return card to m-todo (or y-todo if year archive)
-        const destCol = arch.month ? 'm-todo' : 'y-todo';
         S.cards.push({...card, col: destCol, rot: rot()});
         arch.cards=arch.cards.filter(x=>x.id!==card.id);
+        if(arch.month) S.doneOpen['m-done']=true; else S.doneOpen['y-done']=true;
         if(!arch.cards.length){ S.archives=S.archives.filter(a=>a.id!==arch.id); }
         save(); render(); renderArchiveList();
-        showInfoToast(`Карточка возвращена на доску`);
+        showInfoToast(`Карточка возвращена в «Сделано»`);
       });
       // Delete button
       const db=document.createElement('button');db.className='arch-card-del';db.textContent='✕';
