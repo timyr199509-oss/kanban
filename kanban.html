@@ -437,29 +437,42 @@ body.sb-open .legend-bar { margin-left: 160px; }
 .card-menu-btn.vis { opacity: 1; }
 .card-menu-btn:active { background: rgba(0,0,0,0.18); }
 
-/* ── CARD POPUP ── */
+/* ── CARD POPUP (centered modal — never flies off-screen at any zoom) ── */
+#cardPopupBack {
+  position: fixed; inset: 0; z-index: 499;
+  background: rgba(0,0,0,0.4); backdrop-filter: blur(1px);
+  display: none; opacity: 0; transition: opacity 0.18s;
+}
+#cardPopupBack.show { display: block; opacity: 1; }
 #cardPopup {
   position: fixed; z-index: 500; background: #fff;
-  border-radius: 12px; padding: 10px 12px 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.3); min-width: 180px;
-  display: none;
+  border-radius: 16px; padding: 16px 16px 18px;
+  box-shadow: 0 10px 44px rgba(0,0,0,0.45);
+  width: min(290px, calc(100vw - 44px));
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%) scale(0.94);
+  opacity: 0; pointer-events: none; display: none;
+  transition: opacity 0.18s, transform 0.18s cubic-bezier(0.32,0.72,0,1);
 }
-#cardPopup.show { display: block; }
-.cp-colors { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px; }
+#cardPopup.show {
+  display: block; opacity: 1; pointer-events: auto;
+  transform: translate(-50%, -50%) scale(1);
+}
+.cp-colors { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; justify-content: center; }
 .cp-dot {
-  width: 22px; height: 22px; border-radius: 50%; cursor: pointer;
+  width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
   border: 2px solid transparent; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
   transition: transform 0.1s;
 }
 .cp-dot:active, .cp-dot:hover { transform: scale(1.2); }
 .cp-dot.active { border-color: #333; }
-.cp-actions { display: flex; flex-direction: column; gap: 5px; }
+.cp-actions { display: flex; flex-direction: column; gap: 7px; }
 .cp-btn {
-  padding: 7px 10px; border: none; border-radius: 8px;
-  font-size: 12px; font-weight: 600; cursor: pointer;
-  text-align: left; background: #f5f5f5; color: #333; transition: background 0.1s;
+  padding: 12px 14px; border: none; border-radius: 11px;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  text-align: center; background: #f3f3f3; color: #333; transition: background 0.1s;
 }
-.cp-btn:active { background: #ebebeb; }
+.cp-btn:active { background: #e6e6e6; }
 .cp-btn.done { color: #0a7; }
 .cp-btn.del  { color: #c00; }
 
