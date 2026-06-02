@@ -1804,16 +1804,20 @@ function showCardPopup(cardId,secId,inDone,anchor) {
   cpDone.onclick=()=>{ markDone(cardId,secId); closeCardPopup(); };
   document.getElementById('cpMove').onclick=()=>{ closeCardPopup(); openMove(cardId); };
   document.getElementById('cpDel').onclick =()=>{ closeCardPopup(); softDel(cardId); };
-  popup.style.display='block'; popup.classList.add('show');
-  const r=anchor.getBoundingClientRect(), pw=popup.offsetWidth, ph=popup.offsetHeight;
-  let left=r.right+6, top=r.top;
-  if(left+pw>window.innerWidth-8) left=r.left-pw-6;
-  if(top+ph>window.innerHeight-8) top=window.innerHeight-ph-8;
-  popup.style.left=Math.max(8,left)+'px'; popup.style.top=Math.max(8,top)+'px';
+  // Centered modal — no coordinate math, so it can never land off-screen
+  // regardless of board zoom or which column the card is in.
+  const back=document.getElementById('cardPopupBack');
+  if(back){ back.style.display='block'; requestAnimationFrame(()=>back.classList.add('show')); }
+  popup.style.display='block';
+  requestAnimationFrame(()=>popup.classList.add('show'));
 }
-function closeCardPopup(){ const p=document.getElementById('cardPopup'); p.classList.remove('show'); p.style.display='none'; }
-document.addEventListener('click',e=>{ const p=document.getElementById('cardPopup'); if(p.classList.contains('show')&&!p.contains(e.target))closeCardPopup(); });
-document.addEventListener('scroll',()=>closeCardPopup(),true);
+function closeCardPopup(){
+  const p=document.getElementById('cardPopup');
+  p.classList.remove('show');
+  const back=document.getElementById('cardPopupBack');
+  if(back){ back.classList.remove('show'); setTimeout(()=>{back.style.display='none';},180); }
+  setTimeout(()=>{ if(!p.classList.contains('show')) p.style.display='none'; },180);
+}
 
 // ── FOCUS ROW (month) ────────────────────
 function buildFocusStickerRow(rowEl, label, stickersArr) {
