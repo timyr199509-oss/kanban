@@ -1323,19 +1323,9 @@ function startUserListener(userId) {
   fbUnsubscribe = fbDoc(userId).onSnapshot(snap => {
     if (remoteApplying) return;
     if (!snap.exists) {
-      // User doc empty — try to migrate from legacy 'state' doc
-      syncStatus('sync-ing', '↑ Поиск данных...');
-      db.collection('kanban').doc('state').get().then(legSnap => {
-        if (legSnap.exists) {
-          const leg = legSnap.data();
-          if (leg && leg.data) {
-            // Copy legacy data into this user's doc
-            fbDoc(userId).set({ data: leg.data, ts: Date.now() });
-            applyRemoteData(userId, leg.data);
-            syncStatus('sync-ok', '✓ Данные восстановлены');
-          } else { syncStatus('sync-ok', '✓ Онлайн'); }
-        } else { syncStatus('sync-ok', '✓ Онлайн'); }
-      }).catch(() => syncStatus('sync-ok', '✓ Онлайн'));
+      // Brand-new profile — start empty. Do NOT pull legacy/other data:
+      // that used to leak the original owner's data into every new profile.
+      syncStatus('sync-ok', '✓ Онлайн');
       return;
     }
     const remote = snap.data();
