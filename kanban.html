@@ -2268,10 +2268,16 @@ function buildMonthArchItem(arch){
   item.appendChild(hdr);
   const body=document.createElement('div');body.className='arch-body';
   const cats=arch.categories||S.categories;const catMap={};cats.forEach(c=>catMap[c.id]=c);
+  // ── Snapshot: focus of the month + weekly goals (read-only) ──
+  const fg=archStickerGroup('★ Фокус месяца', arch.focus); if(fg) body.appendChild(fg);
+  const wg=archStickerGroup('★ Цели недели', arch.weekGoals); if(wg) body.appendChild(wg);
   // Restored done-cards go back to the "Сделано" column (not "Нужно сделать"),
   // so they never mix with the active month's tasks.
   const destCol = arch.month ? 'm-done' : 'y-done';
   if(arch.cards.length){
+    const doneLbl=document.createElement('div');
+    doneLbl.style.cssText='font-size:10px;font-weight:800;color:#888;text-transform:uppercase;letter-spacing:0.4px;margin:2px 0 7px;';
+    doneLbl.textContent='✓ Выполнено'; body.appendChild(doneLbl);
     // ── Restore-all button (one tap returns the whole closed month) ──
     const allBtn=document.createElement('button');allBtn.className='arch-restore-all';
     allBtn.textContent=`↩ Вернуть все задачи (${arch.cards.length}) в «Сделано»`;
