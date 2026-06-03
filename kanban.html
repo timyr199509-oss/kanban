@@ -2240,6 +2240,22 @@ function renderArchiveList(){
   noYear.forEach(arch=>list.appendChild(buildMonthArchItem(arch)));
 }
 
+// Read-only chip group for archived focus / weekly goals
+function archStickerGroup(title, stickers){
+  const withText=(stickers||[]).filter(s=>s&&s.text&&s.text.trim());
+  if(!withText.length) return null;
+  const wrap=document.createElement('div');
+  const lbl=document.createElement('div');
+  lbl.style.cssText='font-size:10px;font-weight:800;color:#888;text-transform:uppercase;letter-spacing:0.4px;margin:2px 0 7px;';
+  lbl.textContent=title; wrap.appendChild(lbl);
+  const srow=document.createElement('div');srow.style.cssText='display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;';
+  withText.forEach(stk=>{
+    const el=document.createElement('div');
+    el.style.cssText=`background:${stk.color};padding:5px 9px;border-radius:3px 3px 6px 6px;font-size:11px;color:rgba(0,0,0,0.72);box-shadow:1px 2px 5px rgba(0,0,0,0.18);${stk.done?'text-decoration:line-through;opacity:0.55;':''}`;
+    el.textContent=(stk.done?'✓ ':'')+stk.text; srow.appendChild(el);
+  });
+  wrap.appendChild(srow); return wrap;
+}
 function buildMonthArchItem(arch){
   const item=document.createElement('div');item.className='arch-item';item.style.marginBottom='6px';
   const hdr=document.createElement('div');hdr.className='arch-hdr';
