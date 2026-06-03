@@ -2148,8 +2148,8 @@ function doCloseMonth(monthNum,year){
   const label=MONTHS_RU[monthNum-1]+' '+year;
   const doneCards=S.cards.filter(c=>c.col==='m-done');
   const msg=doneCards.length>0
-    ?`Архивировать "${label}"?\n✓ ${doneCards.length} выполненных задач будет сохранено в архив.\nНевыполненные задачи останутся на доске.`
-    :`В колонке "Сделано" нет задач.\nВсё равно создать архивную запись для "${label}"?`;
+    ?`Архивировать "${label}"?\n✓ ${doneCards.length} выполненных задач, фокус месяца и цели недели будут сохранены в архив.\nНевыполненные задачи останутся на доске.`
+    :`В колонке "Сделано" нет задач.\nВсё равно сохранить "${label}" в архив (фокус месяца и цели недели)?`;
   if(!confirm(msg))return;
   const archive={
     id:uid(), label, month:monthNum, year,
