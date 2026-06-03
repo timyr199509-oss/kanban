@@ -2154,6 +2154,8 @@ function doCloseMonth(monthNum,year){
   const archive={
     id:uid(), label, month:monthNum, year,
     cards:doneCards.map(c=>({...c})),
+    focus:(S.focusStickers&&S.focusStickers.month||[]).map(s=>({...s})),
+    weekGoals:(S.weekStickers||[]).map(s=>({...s})),
     categories:S.categories.map(c=>({...c})),
     colTitles:{...S.colTitles},
     createdAt:Date.now()
