@@ -309,6 +309,18 @@
       cursor: pointer; padding: 4px 8px; flex-shrink: 0;
     }
     .grp-row .grp-del:active { color: var(--red); }
+    .emoji-picker-grid {
+      display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px;
+      max-height: 52vh; overflow-y: auto; padding: 2px;
+    }
+    .emoji-picker-grid .ep-opt {
+      aspect-ratio: 1; border-radius: 12px;
+      background: #111114; border: 1.5px solid var(--border);
+      font-size: 24px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .emoji-picker-grid .ep-opt.sel { border-color: var(--green); background: rgba(52,199,89,0.14); }
+    .emoji-picker-grid .ep-opt:active { transform: scale(0.9); }
     .grp-add {
       width: 100%; padding: 12px; border-radius: 12px; border: 1.5px dashed var(--border);
       background: none; color: var(--muted2); font-size: 14px; font-weight: 600;
@@ -445,6 +457,17 @@
     </div>
   </div>
 
+  <!-- ════════ EMOJI PICKER MODAL ════════ -->
+  <div class="modal-bg" id="emojiModal">
+    <div class="modal">
+      <h2>Выберите иконку</h2>
+      <div class="emoji-picker-grid" id="emojiPickerGrid"></div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="closeModal('emojiModal')">Отмена</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Firebase SDK (same project as kanban, separate collection) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -554,6 +577,15 @@
   // ─────────── Helpers ───────────
   const EMOJIS = ['🧂','🧷','⛽','🛒','🍼','🧻','☕','🧴','🧼','💊','🪥','🐾','🔋','💧','🥛','🌿','🍞','🚿','🧯','📦','🚗','🔌','📱','🎫'];
   const GROUP_EMOJIS = ['📦','🧪','👶','🛒','🚗','💳','🏠','🐶','💊','🍽️','🧹','🌿'];
+  // Big set for the emoji picker (groups + items)
+  const ALL_EMOJIS = ['📦','🗂️','🏠','🧪','🧴','🧼','🧽','🧹','🧻','🚿','🛁','🚽','🧯','🪣','🧺',
+    '👶','🍼','🧷','🧸','🍭','🎈','🐶','🐱','🐾','🦴','🐟','🐹','🐰',
+    '🛒','🛍️','🥦','🥕','🍞','🥛','🥚','🧀','🍎','🍌','🍗','🍖','🐟','☕','🍫','🧂','🧈','🍪','🥫','🍝',
+    '🚗','🚙','⛽','🔧','🛢️','🛞','🔋','🅿️','🚘',
+    '💳','💰','💵','🏦','📈','🧾','🎫','📱','💡','🔌','📶','📺','🌐',
+    '💊','💉','🩹','🦷','🪥','🧫','🩺','👓','🧼',
+    '👕','👗','👟','🧦','🧥','🩲','👔','🎽',
+    '🌿','🌱','🪴','🌻','🍃','💧','🔥','🧯','🪫','🔋','🛠️','🪛','🔨','📎','✂️','🖊️','📚','🎮','🎧','⚽','🏀','🚲','🎸','💄','💅','🪒','🧴'];
   const MONTHS = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
   const MONTHS_NOM = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 
@@ -914,10 +946,25 @@
     }
     wrap.innerHTML = data.groups.map(g => `
       <div class="grp-row">
-        <span class="grp-emoji" onclick="cycleGroupEmoji('${g.id}')">${g.emoji}</span>
+        <span class="grp-emoji" onclick="openEmojiPicker('${g.id}')" title="Выбрать иконку">${g.emoji}</span>
         <input value="${esc(g.name)}" oninput="renameGroup('${g.id}', this.value)" placeholder="Название группы">
         <button class="grp-del" onclick="deleteGroup('${g.id}')">🗑</button>
       </div>`).join('');
+  }
+  // ─────────── Emoji picker (for groups) ───────────
+  let emojiPickGroupId = null;
+  function openEmojiPicker(groupId) {
+    emojiPickGroupId = groupId;
+    const g = groupById(groupId);
+    const cur = g ? g.emoji : null;
+    document.getElementById('emojiPickerGrid').innerHTML = [...new Set(ALL_EMOJIS)].map(e =>
+      `<div class="ep-opt${e===cur?' sel':''}" onclick="pickGroupEmoji('${e}')">${e}</div>`).join('');
+    openModal('emojiModal');
+  }
+  function pickGroupEmoji(e) {
+    const g = groupById(emojiPickGroupId);
+    if (g) { g.emoji = e; save(); renderGroupList(); }
+    closeModal('emojiModal');
   }
   function addGroup() {
     data.groups.push({ id: uid(), name: '', emoji: GROUP_EMOJIS[data.groups.length % GROUP_EMOJIS.length] });
