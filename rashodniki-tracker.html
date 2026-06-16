@@ -321,6 +321,14 @@
     }
     .emoji-picker-grid .ep-opt.sel { border-color: var(--green); background: rgba(52,199,89,0.14); }
     .emoji-picker-grid .ep-opt:active { transform: scale(0.9); }
+    .seg { display: flex; gap: 6px; }
+    .seg .seg-btn {
+      flex: 1; border-radius: 11px; background: #111114; border: 1.5px solid var(--border);
+      color: var(--muted2); font-weight: 600; font-size: 14px; cursor: pointer;
+      font-family: inherit; padding: 0;
+    }
+    .seg .seg-btn.sel { border-color: var(--green); background: rgba(52,199,89,0.12); color: var(--text); }
+    .life-hint { font-size: 12px; color: var(--muted); margin-top: 8px; min-height: 14px; }
     .grp-add {
       width: 100%; padding: 12px; border-radius: 12px; border: 1.5px dashed var(--border);
       background: none; color: var(--muted2); font-size: 14px; font-weight: 600;
@@ -402,6 +410,14 @@
       <div class="field">
         <label>Единица измерения (необязательно)</label>
         <input type="text" id="catUnit" placeholder="мешок, шт, литр…" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Хватает 1 <span id="lifeUnitLbl">шт</span> на (необязательно)</label>
+        <div class="field-row" style="align-items:stretch; gap:8px;">
+          <input type="number" id="catLifeVal" inputmode="decimal" placeholder="напр. 3" style="flex:1;" oninput="updateLifeHint()">
+          <div class="seg" id="lifeUnitSeg" style="flex:1.4;"></div>
+        </div>
+        <div class="life-hint" id="lifeHint"></div>
       </div>
       <div class="btn-row">
         <button class="btn btn-secondary" onclick="closeModal('catModal')">Отмена</button>
@@ -628,19 +644,36 @@
     let monthSpend = 0, monthCount = 0;
     entries.forEach(e => { if (e.date.startsWith(ym)) { monthSpend += e.amount||0; monthCount++; } });
 
-    let projected = 0;
-    if (avgInterval && avgInterval > 0) projected = avgPrice * (30.44 / avgInterval);
-    let perMonthQty = null;
-    if (avgInterval && avgInterval > 0) {
-      const avgQty = entries.reduce((s,e) => s + (e.qty||1), 0) / n;
+    // Manual lifespan per 1 unit (user-entered), overrides the auto interval logic
+    const unitLifeDays = cat.lifeVal ? cat.lifeVal * lifeUnitDays(cat.lifeUnit) : null;
+    const manual = !!(unitLifeDays && unitLifeDays > 0);
+
+    let projected = 0, perMonthQty = null, coverDays = null, lifeSource = null;
+    if (manual) {
+      lifeSource = 'manual';
+      coverDays = unitLifeDays;                       // как долго служит 1 штука
+      perMonthQty = 30.44 / unitLifeDays;             // штук в месяц
+      projected = avgUnitPrice * perMonthQty;         // расход в месяц
+    } else if (avgInterval && avgInterval > 0) {
+      lifeSource = 'auto';
+      coverDays = avgInterval;                        // средний интервал между покупками
+      const avgQty = totalQty / n;
       perMonthQty = avgQty * (30.44 / avgInterval);
+      projected = avgPrice * (30.44 / avgInterval);
     }
+
     let daysSinceLast = null, daysToNext = null;
     if (n >= 1) {
-      daysSinceLast = daysBetween(entries[n-1].date, todayISO());
-      if (avgInterval) daysToNext = Math.round(avgInterval - daysSinceLast);
+      const lastDate = entries[n-1].date;
+      daysSinceLast = daysBetween(lastDate, todayISO());
+      if (manual) {
+        const lastQty = entries[n-1].qty || 1;
+        daysToNext = Math.round(lastQty * unitLifeDays - daysSinceLast); // запас от последней закупки
+      } else if (avgInterval) {
+        daysToNext = Math.round(avgInterval - daysSinceLast);
+      }
     }
-    return { entries, n, total, avgPrice, avgUnitPrice, totalQty, avgInterval, monthSpend, monthCount, projected, perMonthQty, daysSinceLast, daysToNext };
+    return { entries, n, total, avgPrice, avgUnitPrice, totalQty, avgInterval, unitLifeDays, manual, lifeSource, coverDays, monthSpend, monthCount, projected, perMonthQty, daysSinceLast, daysToNext };
   }
   function statusOf(s) {
     if (s.daysToNext === null) return 'none';
@@ -708,9 +741,11 @@
     else if (st === 'soon') { badge = 'скоро закончится'; badgeCls = 'soon'; }
     else { badge = 'через ' + pluralDays(s.daysToNext); badgeCls = 'ok'; }
 
+    const uLbl = c.unit ? ' ' + c.unit : ' шт';
     let meta;
-    if (s.avgInterval) meta = 'хватает на ~' + pluralDays(Math.round(s.avgInterval)) + ' · ' + s.n + ' покупок';
-    else if (s.n === 1) meta = '1 покупка · нужна ещё для статистики';
+    if (s.lifeSource === 'manual') meta = 'хватает 1' + uLbl + ' на ~' + pluralDays(Math.round(s.coverDays)) + (s.n ? ' · ' + s.n + ' покупок' : '');
+    else if (s.avgInterval) meta = 'хватает на ~' + pluralDays(Math.round(s.avgInterval)) + ' · ' + s.n + ' покупок';
+    else if (s.n === 1) meta = '1 покупка · задайте срок службы';
     else meta = 'нет покупок';
 
     return `<div class="cat-card" onclick="openDetail('${c.id}')">
@@ -771,8 +806,9 @@
       let icon, text;
       if (st === 'due') {
         const over = -s.daysToNext; icon = '🛒';
-        text = over === 0 ? '<b>Пора покупать</b> — по статистике запас на исходе.'
-                          : '<b>Пора покупать</b> — прошло на ' + pluralDays(over) + ' больше обычного.';
+        if (over === 0) text = '<b>Пора покупать</b> — запас на исходе.';
+        else if (s.lifeSource === 'manual') text = '<b>Пора покупать</b> — запас кончился ' + pluralDays(over) + ' назад.';
+        else text = '<b>Пора покупать</b> — прошло на ' + pluralDays(over) + ' больше обычного.';
       } else if (st === 'soon') { icon = '⏳'; text = '<b>Скоро закончится</b> — примерно через ' + pluralDays(s.daysToNext) + '.'; }
       else { icon = '✅'; text = 'Следующая покупка примерно через <b>' + pluralDays(s.daysToNext) + '</b>.'; }
       nb.innerHTML = `<div class="next-banner ${st}"><div class="nb-icon">${icon}</div><div class="nb-text">${text}</div></div>`;
@@ -780,8 +816,9 @@
 
     const unit = c.unit ? ' ' + c.unit : ' шт';
     const boxes = [];
-    boxes.push(box('В среднем / мес', s.projected ? fmtMoney(s.projected) + '<span> ₽</span>' : '—', s.projected ? 'прогноз расходов' : 'нужно ≥2 покупок'));
-    boxes.push(box('Хватает на', s.avgInterval ? Math.round(s.avgInterval) + '<span> дн</span>' : '—', s.avgInterval ? 'средний интервал' : 'нужно ≥2 покупок'));
+    boxes.push(box('В среднем / мес', s.projected ? fmtMoney(s.projected) + '<span> ₽</span>' : '—', s.projected ? 'прогноз расходов' : (s.manual ? 'добавьте покупку' : 'нужно ≥2 покупок')));
+    const coverHint = s.lifeSource === 'manual' ? ('на 1' + unit + ' · задано') : s.lifeSource === 'auto' ? 'средний интервал' : 'задайте срок или ≥2 покупок';
+    boxes.push(box('Хватает на', s.coverDays ? Math.round(s.coverDays) + '<span> дн</span>' : '—', coverHint));
     boxes.push(box('Средняя цена', s.avgUnitPrice ? fmtMoney(s.avgUnitPrice) + '<span> ₽</span>' : '—', 'за 1' + (c.unit ? ' ' + esc(c.unit) : ' шт')));
     boxes.push(box('Нужно / мес', s.perMonthQty ? Math.ceil(s.perMonthQty) + '<span>' + unit + '</span>' : '—', 'чтобы закупиться разом'));
     boxes.push(box('Всего потрачено', fmtMoney(s.total) + '<span> ₽</span>', s.n + ' покупок' + (g ? ' · ' + g.name : ''), true));
@@ -827,6 +864,23 @@
       `<div class="pick-opt emoji-opt${e===selectedEmoji?' sel':''}" onclick="selectEmoji('${e}')">${e}</div>`).join('');
   }
   function selectEmoji(e) { selectedEmoji = e; buildEmojiGrid(); }
+  // lifespan segmented control (день/неделя/месяц)
+  const LIFE_UNITS = [{k:'day',lbl:'дни',d:1},{k:'week',lbl:'нед',d:7},{k:'month',lbl:'мес',d:30.44}];
+  let selectedLifeUnit = 'month';
+  function buildLifeSeg() {
+    document.getElementById('lifeUnitSeg').innerHTML = LIFE_UNITS.map(u =>
+      `<button type="button" class="seg-btn${u.k===selectedLifeUnit?' sel':''}" onclick="selectLifeUnit('${u.k}')">${u.lbl}</button>`).join('');
+  }
+  function selectLifeUnit(k) { selectedLifeUnit = k; buildLifeSeg(); updateLifeHint(); }
+  function lifeUnitDays(k) { return (LIFE_UNITS.find(u => u.k === k) || LIFE_UNITS[2]).d; }
+  function updateLifeHint() {
+    const val = parseFloat(document.getElementById('catLifeVal').value) || 0;
+    const hint = document.getElementById('lifeHint');
+    if (!val) { hint.textContent = 'Если задать — срок и напоминания считаются от этого, а не по интервалу покупок.'; return; }
+    const days = Math.round(val * lifeUnitDays(selectedLifeUnit));
+    const unit = document.getElementById('catUnit').value.trim() || 'шт';
+    hint.textContent = `1 ${unit} ≈ ${pluralDays(days)}. Купишь 2 — хватит на ${pluralDays(days*2)}.`;
+  }
   function buildGroupPick() {
     let html = `<div class="pick-opt${selectedGroup===null?' sel':''}" onclick="selectGroup(null)">Без группы</div>`;
     data.groups.forEach(g =>
@@ -847,8 +901,11 @@
     document.getElementById('catModalTitle').textContent = 'Новый товар';
     document.getElementById('catName').value = '';
     document.getElementById('catUnit').value = '';
+    document.getElementById('catLifeVal').value = '';
+    selectedLifeUnit = 'month';
+    document.getElementById('lifeUnitLbl').textContent = 'шт';
     document.getElementById('catDelBtn').classList.add('hidden');
-    buildEmojiGrid(); buildGroupPick();
+    buildEmojiGrid(); buildGroupPick(); buildLifeSeg(); updateLifeHint();
     openModal('catModal');
     setTimeout(() => document.getElementById('catName').focus(), 100);
   }
@@ -858,19 +915,26 @@
     document.getElementById('catModalTitle').textContent = 'Товар';
     document.getElementById('catName').value = c.name;
     document.getElementById('catUnit').value = c.unit || '';
+    document.getElementById('catLifeVal').value = c.lifeVal ?? '';
+    selectedLifeUnit = c.lifeUnit || 'month';
+    document.getElementById('lifeUnitLbl').textContent = c.unit || 'шт';
     document.getElementById('catDelBtn').classList.remove('hidden');
-    buildEmojiGrid(); buildGroupPick();
+    buildEmojiGrid(); buildGroupPick(); buildLifeSeg(); updateLifeHint();
     openModal('catModal');
   }
   function saveCat() {
     const name = document.getElementById('catName').value.trim();
     if (!name) { document.getElementById('catName').focus(); return; }
     const unit = document.getElementById('catUnit').value.trim();
+    const lifeRaw = document.getElementById('catLifeVal').value;
+    const lifeVal = lifeRaw === '' ? null : (parseFloat(lifeRaw) || null);
+    const lifeUnit = lifeVal ? selectedLifeUnit : null;
     if (editingCatId) {
       const c = data.cats.find(x => x.id === editingCatId);
       c.name = name; c.unit = unit; c.emoji = selectedEmoji; c.groupId = selectedGroup;
+      c.lifeVal = lifeVal; c.lifeUnit = lifeUnit;
     } else {
-      data.cats.push({ id: uid(), name, unit, emoji: selectedEmoji, groupId: selectedGroup, entries: [] });
+      data.cats.push({ id: uid(), name, unit, emoji: selectedEmoji, groupId: selectedGroup, lifeVal, lifeUnit, entries: [] });
     }
     save(); closeModal('catModal');
     if (currentCatId) renderDetail(); else renderList();
