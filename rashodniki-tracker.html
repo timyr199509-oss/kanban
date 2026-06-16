@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Расходники</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0c0c0e;
+      --card: #17171a;
+      --card2: #1f1f23;
+      --border: #2a2a30;
+      --text: #ffffff;
+      --muted: #55555f;
+      --muted2: #888898;
+      --green: #34C759;
+      --orange: #ff9f0a;
+      --red: #ff453a;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      padding: 0 16px 110px;
+      max-width: 480px;
+      margin: 0 auto;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ── Header ── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 46px 0 6px;
+    }
+    .header h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; flex: 1; }
+    .icon-btn {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      width: 38px; height: 38px;
+      color: var(--text);
+      font-size: 18px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: opacity 0.15s;
+    }
+    .icon-btn:active { opacity: 0.6; }
+
+    /* ── Sync pill ── */
+    .sync-pill {
+      font-size: 11px; font-weight: 600; padding: 5px 11px;
+      border-radius: 20px; white-space: nowrap; transition: all 0.2s;
+    }
+    .sync-ok  { background: rgba(52,199,89,0.16);  color: #5dba7d; }
+    .sync-ing { background: rgba(255,200,60,0.16); color: #c9a825; }
+    .sync-err { background: rgba(220,80,80,0.16);  color: #d05050; }
+
+    /* ── Month total summary ── */
+    .month-summary {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px 18px 16px;
+      margin: 14px 0 16px;
+    }
+    .month-summary .ms-label {
+      font-size: 12px; color: var(--muted2);
+      text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;
+    }
+    .month-summary .ms-value {
+      font-size: 34px; font-weight: 800; letter-spacing: -1px; margin-top: 6px;
+    }
+    .month-summary .ms-value span { font-size: 20px; color: var(--muted2); font-weight: 600; }
+    .ms-sub {
+      display: flex; gap: 18px; margin-top: 12px;
+      font-size: 12px; color: var(--muted2);
+    }
+    .ms-sub b { color: var(--text); font-size: 14px; font-weight: 700; display: block; }
+
+    /* ── Filter chips ── */
+    .chips {
+      display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 14px;
+      -ms-overflow-style: none; scrollbar-width: none;
+    }
+    .chips::-webkit-scrollbar { display: none; }
+    .chip {
+      flex-shrink: 0;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 8px 14px;
+      font-size: 13px; font-weight: 600; color: var(--muted2);
+      cursor: pointer; white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .chip.active { background: var(--text); color: #000; border-color: var(--text); }
+    .chip.manage { color: var(--muted); }
+
+    /* ── Section label ── */
+    .section-label {
+      display: flex; align-items: baseline; justify-content: space-between;
+      font-size: 12px; color: var(--muted); font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.6px;
+      margin: 18px 4px 10px;
+    }
+    .section-label .sl-sum { color: var(--muted2); text-transform: none; letter-spacing: 0; font-size: 12px; }
+    .section-label .sl-sum b { color: var(--text); font-weight: 700; }
+
+    /* ── Category card (list view) ── */
+    .cat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: transform 0.1s, border-color 0.15s;
+    }
+    .cat-card:active { transform: scale(0.98); border-color: #3a3a44; }
+    .cat-emoji {
+      width: 50px; height: 50px; flex-shrink: 0;
+      background: var(--card2);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px;
+    }
+    .cat-info { flex: 1; min-width: 0; }
+    .cat-name { font-size: 16px; font-weight: 700; letter-spacing: -0.2px; }
+    .cat-meta { font-size: 12px; color: var(--muted2); margin-top: 3px; }
+    .cat-right { text-align: right; flex-shrink: 0; }
+    .cat-month { font-size: 17px; font-weight: 700; }
+    .cat-month span { font-size: 12px; color: var(--muted2); font-weight: 600; }
+    .cat-badge {
+      display: inline-block; margin-top: 5px;
+      font-size: 10px; font-weight: 700; padding: 3px 8px;
+      border-radius: 20px; letter-spacing: 0.2px;
+    }
+    .cat-badge.ok  { background: rgba(52,199,89,0.15);  color: var(--green); }
+    .cat-badge.soon{ background: rgba(255,159,10,0.15); color: var(--orange); }
+    .cat-badge.due { background: rgba(255,69,58,0.15);  color: var(--red); }
+    .cat-badge.none{ background: var(--card2); color: var(--muted); }
+
+    /* ── Detail: stats grid ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .stat-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px 14px 13px;
+    }
+    .stat-box.wide { grid-column: 1 / -1; }
+    .stat-box .sb-label {
+      font-size: 11px; color: var(--muted2); font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.4px;
+    }
+    .stat-box .sb-value { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; margin-top: 5px; }
+    .stat-box .sb-value span { font-size: 14px; color: var(--muted2); font-weight: 600; }
+    .stat-box .sb-hint { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+    /* next-buy banner */
+    .next-banner {
+      border-radius: 16px;
+      padding: 14px 16px;
+      margin-bottom: 18px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .next-banner.ok  { background: rgba(52,199,89,0.10);  border: 1px solid rgba(52,199,89,0.25); }
+    .next-banner.soon{ background: rgba(255,159,10,0.10); border: 1px solid rgba(255,159,10,0.25); }
+    .next-banner.due { background: rgba(255,69,58,0.10);  border: 1px solid rgba(255,69,58,0.25); }
+    .next-banner .nb-icon { font-size: 22px; }
+    .next-banner .nb-text { font-size: 13px; line-height: 1.4; }
+    .next-banner .nb-text b { font-weight: 700; }
+
+    /* ── Entry (purchase) row ── */
+    .entry {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px 16px;
+      margin-bottom: 9px;
+    }
+    .entry-top {
+      display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+    }
+    .entry-date { font-size: 13px; color: var(--muted2); font-weight: 600; }
+    .entry-amount { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; }
+    .entry-amount span { font-size: 12px; color: var(--muted2); font-weight: 600; }
+    .entry-qty {
+      display: inline-block; margin-top: 6px;
+      font-size: 11px; font-weight: 700; color: var(--muted2);
+      background: var(--card2); border-radius: 8px; padding: 3px 9px;
+    }
+    .entry-note { font-size: 14px; color: var(--text); margin-top: 8px; line-height: 1.45; white-space: pre-wrap; }
+    .entry-foot {
+      display: flex; align-items: center; gap: 14px; margin-top: 10px;
+    }
+    .entry-gap { font-size: 11px; color: var(--muted); }
+    .entry-actions { margin-left: auto; display: flex; gap: 4px; }
+    .entry-act {
+      background: none; border: none; color: var(--muted);
+      font-size: 12px; cursor: pointer; padding: 4px 6px; font-family: inherit;
+    }
+    .entry-act:active { opacity: 0.5; }
+    .entry-act.del:active { color: var(--red); }
+
+    /* ── add button ── */
+    .add-btn {
+      width: 100%;
+      padding: 16px;
+      background: var(--green);
+      color: #fff;
+      border: none;
+      border-radius: 16px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      letter-spacing: -0.2px;
+      margin-bottom: 16px;
+    }
+    .add-btn:active { opacity: 0.8; }
+    .add-btn.sticky { position: sticky; top: 12px; z-index: 10; }
+
+    /* ── Empty state ── */
+    .empty {
+      text-align: center;
+      padding: 50px 20px 30px;
+      color: var(--muted);
+    }
+    .empty .icon { font-size: 44px; margin-bottom: 14px; }
+    .empty p { font-size: 14px; line-height: 1.5; }
+
+    /* ── Modal ── */
+    .modal-bg {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.72);
+      z-index: 300;
+      padding: 24px 16px;
+      overflow-y: auto;
+    }
+    .modal-bg.open { display: flex; align-items: flex-start; justify-content: center; }
+    .modal {
+      background: #1a1a1e;
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 22px;
+      width: 100%;
+      max-width: 440px;
+      margin: 30px 0;
+    }
+    .modal h2 { font-size: 19px; font-weight: 700; margin-bottom: 18px; letter-spacing: -0.3px; }
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: 12px; color: var(--muted2); margin-bottom: 7px; font-weight: 600; }
+    .field input, .field textarea {
+      width: 100%; background: #111114; border: 1.5px solid var(--border);
+      border-radius: 12px; padding: 13px 14px; font-size: 15px; color: var(--text);
+      outline: none; font-family: inherit; -webkit-appearance: none; appearance: none;
+    }
+    .field input:focus, .field textarea:focus { border-color: var(--green); }
+    .field textarea { resize: vertical; min-height: 70px; line-height: 1.4; }
+    .field-row { display: flex; gap: 10px; }
+    .field-row .field { flex: 1; }
+
+    /* emoji / group picker */
+    .pick-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+    .pick-opt {
+      min-width: 44px; height: 44px; padding: 0 12px; border-radius: 12px;
+      background: #111114; border: 1.5px solid var(--border);
+      font-size: 15px; font-weight: 600; color: var(--text); cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .pick-opt.emoji-opt { padding: 0; width: 44px; font-size: 22px; }
+    .pick-opt.sel { border-color: var(--green); background: rgba(52,199,89,0.12); }
+
+    /* group manager rows */
+    .grp-row {
+      display: flex; align-items: center; gap: 10px;
+      background: #111114; border: 1.5px solid var(--border);
+      border-radius: 12px; padding: 8px 8px 8px 12px; margin-bottom: 8px;
+    }
+    .grp-row .grp-emoji { font-size: 20px; cursor: pointer; flex-shrink: 0; }
+    .grp-row input {
+      flex: 1; background: none; border: none; color: var(--text);
+      font-size: 15px; outline: none; font-family: inherit; padding: 6px 0;
+    }
+    .grp-row .grp-del {
+      background: none; border: none; color: var(--muted); font-size: 18px;
+      cursor: pointer; padding: 4px 8px; flex-shrink: 0;
+    }
+    .grp-row .grp-del:active { color: var(--red); }
+    .grp-add {
+      width: 100%; padding: 12px; border-radius: 12px; border: 1.5px dashed var(--border);
+      background: none; color: var(--muted2); font-size: 14px; font-weight: 600;
+      cursor: pointer; font-family: inherit; margin-top: 4px;
+    }
+
+    .btn-row { display: flex; gap: 10px; margin-top: 20px; }
+    .btn { flex: 1; padding: 14px; border-radius: 14px; font-size: 15px; font-weight: 700; cursor: pointer; border: none; font-family: inherit; }
+    .btn-primary { background: var(--green); color: #fff; }
+    .btn-secondary { background: var(--card2); color: var(--muted2); }
+    .btn:active { opacity: 0.8; }
+    .modal-del {
+      background: none; border: none; color: var(--red);
+      font-size: 13px; cursor: pointer; margin-top: 14px; width: 100%;
+      padding: 8px; font-family: inherit; font-weight: 600;
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <!-- ════════ LIST VIEW ════════ -->
+  <div id="listView">
+    <div class="header">
+      <h1>Расходники</h1>
+      <span class="sync-pill sync-ing" id="syncPill">Подключение…</span>
+    </div>
+
+    <div class="month-summary">
+      <div class="ms-label">Расходы за <span id="msMonthName"></span></div>
+      <div class="ms-value">0<span> ₽</span></div>
+      <div class="ms-sub">
+        <div><b id="msProjected">0 ₽</b>в среднем / мес</div>
+        <div><b id="msCount">0</b>покупок в этом месяце</div>
+      </div>
+    </div>
+
+    <div class="chips" id="chips"></div>
+
+    <div id="catList"></div>
+
+    <button class="add-btn" onclick="openCatModal()">+ Новый товар</button>
+  </div>
+
+  <!-- ════════ DETAIL VIEW ════════ -->
+  <div id="detailView" class="hidden">
+    <div class="header">
+      <button class="icon-btn" onclick="showList()" style="font-size:22px;">‹</button>
+      <h1 id="dvTitle" style="font-size:21px;"></h1>
+      <button class="icon-btn" onclick="editCurrentCat()" style="font-size:15px;">✏️</button>
+    </div>
+
+    <div id="nextBanner"></div>
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <button class="add-btn sticky" onclick="openEntryModal()">+ Добавить покупку</button>
+
+    <div class="section-label">История</div>
+    <div id="entryList"></div>
+  </div>
+
+  <!-- ════════ CATEGORY (item) MODAL ════════ -->
+  <div class="modal-bg" id="catModal">
+    <div class="modal">
+      <h2 id="catModalTitle">Новый товар</h2>
+      <div class="field">
+        <label>Название</label>
+        <input type="text" id="catName" placeholder="Соль, подгузники, бензин…" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Группа</label>
+        <div class="pick-grid" id="groupPick"></div>
+      </div>
+      <div class="field">
+        <label>Иконка</label>
+        <div class="pick-grid" id="emojiGrid"></div>
+      </div>
+      <div class="field">
+        <label>Единица измерения (необязательно)</label>
+        <input type="text" id="catUnit" placeholder="мешок, шт, литр…" autocomplete="off">
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="closeModal('catModal')">Отмена</button>
+        <button class="btn btn-primary" onclick="saveCat()">Сохранить</button>
+      </div>
+      <button class="modal-del hidden" id="catDelBtn" onclick="deleteCat()">Удалить товар</button>
+    </div>
+  </div>
+
+  <!-- ════════ ENTRY MODAL ════════ -->
+  <div class="modal-bg" id="entryModal">
+    <div class="modal">
+      <h2 id="entryModalTitle">Новая покупка</h2>
+      <div class="field-row">
+        <div class="field">
+          <label>Дата</label>
+          <input type="date" id="entryDate">
+        </div>
+        <div class="field">
+          <label>Сумма, ₽</label>
+          <input type="number" id="entryAmount" inputmode="decimal" placeholder="690" autocomplete="off">
+        </div>
+      </div>
+      <div class="field">
+        <label>Количество (необязательно)</label>
+        <input type="number" id="entryQty" inputmode="decimal" placeholder="1" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Заметка</label>
+        <textarea id="entryNote" placeholder="Купил мешок соли, засыпал в водоочистку…"></textarea>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="closeModal('entryModal')">Отмена</button>
+        <button class="btn btn-primary" onclick="saveEntry()">Сохранить</button>
+      </div>
+      <button class="modal-del hidden" id="entryDelBtn" onclick="deleteEntry()">Удалить покупку</button>
+    </div>
+  </div>
+
+  <!-- ════════ GROUP MANAGER MODAL ════════ -->
+  <div class="modal-bg" id="groupModal">
+    <div class="modal">
+      <h2>Группы</h2>
+      <div id="grpList"></div>
+      <button class="grp-add" onclick="addGroup()">+ Добавить группу</button>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="closeModal('groupModal')">Готово</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK (same project as kanban, separate collection) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+  <script>
+  // ─────────── State ───────────
+  const STORE = 'rashodniki_v2';
+  let data = load();
+
+  function load() {
+    let d = null;
+    try { d = JSON.parse(localStorage.getItem(STORE)); } catch {}
+    if (!d) { // migrate from v1 (flat, no groups)
+      try { d = JSON.parse(localStorage.getItem('rashodniki_v1')); } catch {}
+    }
+    if (!d) d = {};
+    if (!Array.isArray(d.groups)) d.groups = [];
+    if (!Array.isArray(d.cats)) d.cats = [];
+    d.cats.forEach(c => { if (c.groupId === undefined) c.groupId = null; });
+    if (typeof d._ts !== 'number') d._ts = 0;
+    return d;
+  }
+
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+  // ─────────── Firebase sync (mirrors kanban) ───────────
+  const FB_CONFIG = {
+    apiKey: "AIzaSyDFqbs_8e34FDUMIatZxGWbWtK4OK813z0",
+    authDomain: "kanbant-1c059.firebaseapp.com",
+    projectId: "kanbant-1c059",
+    storageBucket: "kanbant-1c059.firebasestorage.app",
+    messagingSenderId: "638771004851",
+    appId: "1:638771004851:web:d72624987b284d5297b7c6"
+  };
+  // Firestore rules only permit the 'kanban' collection, so we store this
+  // tracker under a dedicated doc there — it never collides with kanban profiles.
+  const DOC_ID = 'rashodniki-home'; // shared space — open same URL = same data
+  let db = null, fbSaveTimer = null, remoteApplying = false;
+
+  function setSync(s, txt) {
+    const el = document.getElementById('syncPill');
+    el.textContent = txt; el.className = 'sync-pill ' + s;
+  }
+  function fbDoc() { return db.collection('kanban').doc(DOC_ID); }
+
+  function initFirebase() {
+    try {
+      firebase.initializeApp(FB_CONFIG);
+      db = firebase.firestore();
+      fbDoc().onSnapshot(snap => {
+        if (remoteApplying) return;
+        if (!snap.exists) { setSync('sync-ok', '✓ Онлайн'); return; }
+        const remote = snap.data();
+        if (!remote || !remote.data) return;
+        if ((remote.ts || 0) > (data._ts || 0)) applyRemote(remote.data);
+        else setSync('sync-ok', '✓ Синхронизировано');
+      }, () => setSync('sync-err', '⚠ Офлайн'));
+    } catch (e) { setSync('sync-err', '⚠ Нет соединения'); }
+  }
+
+  function applyRemote(json) {
+    remoteApplying = true;
+    try {
+      const d = JSON.parse(json);
+      data = d;
+      if (!Array.isArray(data.groups)) data.groups = [];
+      if (!Array.isArray(data.cats)) data.cats = [];
+      localStorage.setItem(STORE, json);
+      rerender();
+      setSync('sync-ok', '✓ Синхронизировано');
+    } catch (e) {}
+    remoteApplying = false;
+  }
+
+  function saveToFirebase() {
+    if (!db || remoteApplying) return;
+    data._ts = Date.now();
+    fbDoc().set({ data: JSON.stringify(data), ts: data._ts })
+      .then(() => setSync('sync-ok', '✓ Сохранено'))
+      .catch(() => setSync('sync-err', '⚠ Ошибка сохранения'));
+  }
+
+  function save() {
+    data._ts = Date.now();
+    localStorage.setItem(STORE, JSON.stringify(data));
+    if (db) setSync('sync-ing', '↑ Сохранение…');
+    clearTimeout(fbSaveTimer);
+    fbSaveTimer = setTimeout(saveToFirebase, 700);
+  }
+
+  function rerender() {
+    if (currentCatId && curCat()) renderDetail();
+    else { if (currentCatId && !curCat()) currentCatId = null; showCurrentView(); }
+  }
+  function showCurrentView() {
+    if (currentCatId && curCat()) {
+      document.getElementById('listView').classList.add('hidden');
+      document.getElementById('detailView').classList.remove('hidden');
+      renderDetail();
+    } else {
+      document.getElementById('detailView').classList.add('hidden');
+      document.getElementById('listView').classList.remove('hidden');
+      renderList();
+    }
+  }
+
+  // ─────────── Helpers ───────────
+  const EMOJIS = ['🧂','🧷','⛽','🛒','🍼','🧻','☕','🧴','🧼','💊','🪥','🐾','🔋','💧','🥛','🌿','🍞','🚿','🧯','📦','🚗','🔌','📱','🎫'];
+  const GROUP_EMOJIS = ['📦','🧪','👶','🛒','🚗','💳','🏠','🐶','💊','🍽️','🧹','🌿'];
+  const MONTHS = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  const MONTHS_NOM = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+
+  function fmtMoney(n) { return Math.round(n).toLocaleString('ru-RU'); }
+  function todayISO() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+  function parseISO(s) { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); }
+  function fmtDate(iso) {
+    const d = parseISO(iso);
+    return d.getDate() + ' ' + MONTHS[d.getMonth()] + (d.getFullYear() !== new Date().getFullYear() ? ' ' + d.getFullYear() : '');
+  }
+  function daysBetween(a, b) { return Math.round((parseISO(b) - parseISO(a)) / 86400000); }
+  function pluralDays(n) {
+    n = Math.abs(n);
+    const m10 = n % 10, m100 = n % 100;
+    if (m10 === 1 && m100 !== 11) return n + ' день';
+    if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return n + ' дня';
+    return n + ' дней';
+  }
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function groupById(id) { return data.groups.find(g => g.id === id); }
+
+  // ─────────── Stats ───────────
+  function catStats(cat) {
+    const entries = [...cat.entries].sort((a,b) => a.date.localeCompare(b.date));
+    const n = entries.length;
+    const total = entries.reduce((s,e) => s + (e.amount||0), 0);
+    const avgPrice = n ? total / n : 0;
+    let avgInterval = null;
+    if (n >= 2) avgInterval = daysBetween(entries[0].date, entries[n-1].date) / (n - 1);
+
+    const now = new Date();
+    const ym = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+    let monthSpend = 0, monthCount = 0;
+    entries.forEach(e => { if (e.date.startsWith(ym)) { monthSpend += e.amount||0; monthCount++; } });
+
+    let projected = 0;
+    if (avgInterval && avgInterval > 0) projected = avgPrice * (30.44 / avgInterval);
+    let perMonthQty = null;
+    if (avgInterval && avgInterval > 0) {
+      const avgQty = entries.reduce((s,e) => s + (e.qty||1), 0) / n;
+      perMonthQty = avgQty * (30.44 / avgInterval);
+    }
+    let daysSinceLast = null, daysToNext = null;
+    if (n >= 1) {
+      daysSinceLast = daysBetween(entries[n-1].date, todayISO());
+      if (avgInterval) daysToNext = Math.round(avgInterval - daysSinceLast);
+    }
+    return { entries, n, total, avgPrice, avgInterval, monthSpend, monthCount, projected, perMonthQty, daysSinceLast, daysToNext };
+  }
+  function statusOf(s) {
+    if (s.daysToNext === null) return 'none';
+    if (s.daysToNext <= 0) return 'due';
+    if (s.daysToNext <= 2) return 'soon';
+    return 'ok';
+  }
+
+  // ─────────── List view ───────────
+  let activeFilter = 'all'; // 'all' | groupId | 'none'
+  function renderList() {
+    const now = new Date();
+    document.getElementById('msMonthName').textContent = MONTHS_NOM[now.getMonth()].toLowerCase();
+
+    let monthTotal = 0, monthCount = 0, projTotal = 0;
+    data.cats.forEach(c => {
+      const s = catStats(c);
+      monthTotal += s.monthSpend; monthCount += s.monthCount; projTotal += s.projected;
+    });
+    document.querySelector('.ms-value').innerHTML = fmtMoney(monthTotal) + '<span> ₽</span>';
+    document.getElementById('msProjected').textContent = fmtMoney(projTotal) + ' ₽';
+    document.getElementById('msCount').textContent = monthCount;
+
+    renderChips();
+
+    const list = document.getElementById('catList');
+    if (!data.cats.length) {
+      list.innerHTML = '<div class="empty"><div class="icon">📦</div><p>Пока пусто.<br>Добавьте первый товар — например «Соль» в группу «Химия».</p></div>';
+      return;
+    }
+
+    // Build sections
+    let html = '';
+    if (activeFilter === 'all') {
+      data.groups.forEach(g => {
+        const cats = data.cats.filter(c => c.groupId === g.id);
+        if (cats.length) html += sectionHTML(g.emoji + ' ' + g.name, cats);
+      });
+      const ungrouped = data.cats.filter(c => !c.groupId || !groupById(c.groupId));
+      if (ungrouped.length) html += sectionHTML('Без группы', ungrouped);
+    } else if (activeFilter === 'none') {
+      const cats = data.cats.filter(c => !c.groupId || !groupById(c.groupId));
+      html = cats.length ? cats.map(catCardHTML).join('') : emptyFilter();
+    } else {
+      const cats = data.cats.filter(c => c.groupId === activeFilter);
+      html = cats.length ? cats.map(catCardHTML).join('') : emptyFilter();
+    }
+    list.innerHTML = html;
+  }
+  function emptyFilter() {
+    return '<div class="empty"><div class="icon">🗂️</div><p>В этой группе пока нет товаров.</p></div>';
+  }
+  function sectionHTML(title, cats) {
+    const sum = cats.reduce((acc,c) => acc + catStats(c).monthSpend, 0);
+    return `<div class="section-label"><span>${esc(title)}</span>`
+      + `<span class="sl-sum">за месяц <b>${fmtMoney(sum)} ₽</b></span></div>`
+      + cats.map(catCardHTML).join('');
+  }
+  function catCardHTML(c) {
+    const s = catStats(c);
+    const st = statusOf(s);
+    let badge, badgeCls;
+    if (st === 'none') { badge = s.n ? 'нужно ещё' : 'нет данных'; badgeCls = 'none'; }
+    else if (st === 'due')  { badge = 'пора покупать'; badgeCls = 'due'; }
+    else if (st === 'soon') { badge = 'скоро закончится'; badgeCls = 'soon'; }
+    else { badge = 'через ' + pluralDays(s.daysToNext); badgeCls = 'ok'; }
+
+    let meta;
+    if (s.avgInterval) meta = 'хватает на ~' + pluralDays(Math.round(s.avgInterval)) + ' · ' + s.n + ' покупок';
+    else if (s.n === 1) meta = '1 покупка · нужна ещё для статистики';
+    else meta = 'нет покупок';
+
+    return `<div class="cat-card" onclick="openDetail('${c.id}')">
+      <div class="cat-emoji">${c.emoji || '📦'}</div>
+      <div class="cat-info">
+        <div class="cat-name">${esc(c.name)}</div>
+        <div class="cat-meta">${meta}</div>
+      </div>
+      <div class="cat-right">
+        <div class="cat-month">${fmtMoney(s.monthSpend)}<span> ₽</span></div>
+        <div class="cat-badge ${badgeCls}">${badge}</div>
+      </div>
+    </div>`;
+  }
+  function renderChips() {
+    const chips = document.getElementById('chips');
+    let html = `<div class="chip ${activeFilter==='all'?'active':''}" onclick="setFilter('all')">Все</div>`;
+    data.groups.forEach(g => {
+      html += `<div class="chip ${activeFilter===g.id?'active':''}" onclick="setFilter('${g.id}')">${g.emoji} ${esc(g.name)}</div>`;
+    });
+    if (data.cats.some(c => !c.groupId || !groupById(c.groupId))) {
+      html += `<div class="chip ${activeFilter==='none'?'active':''}" onclick="setFilter('none')">Без группы</div>`;
+    }
+    html += `<div class="chip manage" onclick="openGroupModal()">⚙ Группы</div>`;
+    chips.innerHTML = html;
+  }
+  function setFilter(f) { activeFilter = f; renderList(); }
+
+  // ─────────── Detail view ───────────
+  let currentCatId = null;
+  function openDetail(id) {
+    currentCatId = id;
+    document.getElementById('listView').classList.add('hidden');
+    document.getElementById('detailView').classList.remove('hidden');
+    window.scrollTo(0,0);
+    renderDetail();
+  }
+  function showList() {
+    currentCatId = null;
+    document.getElementById('detailView').classList.add('hidden');
+    document.getElementById('listView').classList.remove('hidden');
+    renderList();
+    window.scrollTo(0,0);
+  }
+  function curCat() { return data.cats.find(c => c.id === currentCatId); }
+
+  function renderDetail() {
+    const c = curCat();
+    if (!c) return showList();
+    const s = catStats(c);
+    const g = groupById(c.groupId);
+    document.getElementById('dvTitle').textContent = (c.emoji||'📦') + ' ' + c.name;
+
+    const nb = document.getElementById('nextBanner');
+    if (s.daysToNext === null) nb.innerHTML = '';
+    else {
+      const st = statusOf(s);
+      let icon, text;
+      if (st === 'due') {
+        const over = -s.daysToNext; icon = '🛒';
+        text = over === 0 ? '<b>Пора покупать</b> — по статистике запас на исходе.'
+                          : '<b>Пора покупать</b> — прошло на ' + pluralDays(over) + ' больше обычного.';
+      } else if (st === 'soon') { icon = '⏳'; text = '<b>Скоро закончится</b> — примерно через ' + pluralDays(s.daysToNext) + '.'; }
+      else { icon = '✅'; text = 'Следующая покупка примерно через <b>' + pluralDays(s.daysToNext) + '</b>.'; }
+      nb.innerHTML = `<div class="next-banner ${st}"><div class="nb-icon">${icon}</div><div class="nb-text">${text}</div></div>`;
+    }
+
+    const unit = c.unit ? ' ' + c.unit : ' шт';
+    const boxes = [];
+    boxes.push(box('В среднем / мес', s.projected ? fmtMoney(s.projected) + '<span> ₽</span>' : '—', s.projected ? 'прогноз расходов' : 'нужно ≥2 покупок'));
+    boxes.push(box('Хватает на', s.avgInterval ? Math.round(s.avgInterval) + '<span> дн</span>' : '—', s.avgInterval ? 'средний интервал' : 'нужно ≥2 покупок'));
+    boxes.push(box('Средняя цена', s.avgPrice ? fmtMoney(s.avgPrice) + '<span> ₽</span>' : '—', 'за покупку'));
+    boxes.push(box('Нужно / мес', s.perMonthQty ? Math.ceil(s.perMonthQty) + '<span>' + unit + '</span>' : '—', 'чтобы закупиться разом'));
+    boxes.push(box('Всего потрачено', fmtMoney(s.total) + '<span> ₽</span>', s.n + ' покупок' + (g ? ' · ' + g.name : ''), true));
+    document.getElementById('statsGrid').innerHTML = boxes.join('');
+
+    const el = document.getElementById('entryList');
+    if (!s.n) {
+      el.innerHTML = '<div class="empty"><div class="icon">🧾</div><p>Покупок пока нет.<br>Добавьте первую — дату, сумму и заметку.</p></div>';
+      return;
+    }
+    const desc = [...s.entries].reverse();
+    el.innerHTML = desc.map(e => {
+      const olderIdx = s.entries.findIndex(x => x.id === e.id) - 1;
+      let gap = '';
+      if (olderIdx >= 0) gap = `<span class="entry-gap">↑ через ${pluralDays(daysBetween(s.entries[olderIdx].date, e.date))} после прошлой</span>`;
+      const qty = e.qty ? `<div class="entry-qty">${e.qty}${c.unit ? ' ' + esc(c.unit) : ' шт'}</div>` : '';
+      const note = e.note ? `<div class="entry-note">${esc(e.note)}</div>` : '';
+      return `<div class="entry">
+        <div class="entry-top">
+          <div class="entry-date">${fmtDate(e.date)}</div>
+          <div class="entry-amount">${fmtMoney(e.amount||0)}<span> ₽</span></div>
+        </div>
+        ${qty}${note}
+        <div class="entry-foot">${gap}
+          <div class="entry-actions">
+            <button class="entry-act" onclick="openEntryModal('${e.id}')">Изменить</button>
+            <button class="entry-act del" onclick="deleteEntryById('${e.id}')">Удалить</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  function box(label, value, hint, wide) {
+    return `<div class="stat-box${wide?' wide':''}"><div class="sb-label">${label}</div><div class="sb-value">${value}</div><div class="sb-hint">${hint}</div></div>`;
+  }
+
+  // ─────────── Category (item) modal ───────────
+  let editingCatId = null, selectedEmoji = EMOJIS[0], selectedGroup = null;
+  function buildEmojiGrid() {
+    document.getElementById('emojiGrid').innerHTML = EMOJIS.map(e =>
+      `<div class="pick-opt emoji-opt${e===selectedEmoji?' sel':''}" onclick="selectEmoji('${e}')">${e}</div>`).join('');
+  }
+  function selectEmoji(e) { selectedEmoji = e; buildEmojiGrid(); }
+  function buildGroupPick() {
+    let html = `<div class="pick-opt${selectedGroup===null?' sel':''}" onclick="selectGroup(null)">Без группы</div>`;
+    data.groups.forEach(g =>
+      html += `<div class="pick-opt${selectedGroup===g.id?' sel':''}" onclick="selectGroup('${g.id}')">${g.emoji} ${esc(g.name)}</div>`);
+    html += `<div class="pick-opt" onclick="newGroupInline()">+ группа</div>`;
+    document.getElementById('groupPick').innerHTML = html;
+  }
+  function selectGroup(id) { selectedGroup = id; buildGroupPick(); }
+  function newGroupInline() {
+    const name = prompt('Название группы:'); if (!name || !name.trim()) return;
+    const g = { id: uid(), name: name.trim(), emoji: GROUP_EMOJIS[data.groups.length % GROUP_EMOJIS.length] };
+    data.groups.push(g); save(); selectedGroup = g.id; buildGroupPick();
+  }
+
+  function openCatModal() {
+    editingCatId = null; selectedEmoji = EMOJIS[0];
+    selectedGroup = (activeFilter !== 'all' && activeFilter !== 'none') ? activeFilter : null;
+    document.getElementById('catModalTitle').textContent = 'Новый товар';
+    document.getElementById('catName').value = '';
+    document.getElementById('catUnit').value = '';
+    document.getElementById('catDelBtn').classList.add('hidden');
+    buildEmojiGrid(); buildGroupPick();
+    openModal('catModal');
+    setTimeout(() => document.getElementById('catName').focus(), 100);
+  }
+  function editCurrentCat() {
+    const c = curCat(); if (!c) return;
+    editingCatId = c.id; selectedEmoji = c.emoji || EMOJIS[0]; selectedGroup = c.groupId || null;
+    document.getElementById('catModalTitle').textContent = 'Товар';
+    document.getElementById('catName').value = c.name;
+    document.getElementById('catUnit').value = c.unit || '';
+    document.getElementById('catDelBtn').classList.remove('hidden');
+    buildEmojiGrid(); buildGroupPick();
+    openModal('catModal');
+  }
+  function saveCat() {
+    const name = document.getElementById('catName').value.trim();
+    if (!name) { document.getElementById('catName').focus(); return; }
+    const unit = document.getElementById('catUnit').value.trim();
+    if (editingCatId) {
+      const c = data.cats.find(x => x.id === editingCatId);
+      c.name = name; c.unit = unit; c.emoji = selectedEmoji; c.groupId = selectedGroup;
+    } else {
+      data.cats.push({ id: uid(), name, unit, emoji: selectedEmoji, groupId: selectedGroup, entries: [] });
+    }
+    save(); closeModal('catModal');
+    if (currentCatId) renderDetail(); else renderList();
+  }
+  function deleteCat() {
+    if (!editingCatId) return;
+    if (!confirm('Удалить товар вместе со всеми покупками?')) return;
+    data.cats = data.cats.filter(c => c.id !== editingCatId);
+    save(); closeModal('catModal'); showList();
+  }
+
+  // ─────────── Entry modal ───────────
+  let editingEntryId = null;
+  function openEntryModal(id) {
+    const c = curCat(); if (!c) return;
+    editingEntryId = id || null;
+    if (editingEntryId) {
+      const e = c.entries.find(x => x.id === editingEntryId);
+      document.getElementById('entryModalTitle').textContent = 'Покупка';
+      document.getElementById('entryDate').value = e.date;
+      document.getElementById('entryAmount').value = e.amount ?? '';
+      document.getElementById('entryQty').value = e.qty ?? '';
+      document.getElementById('entryNote').value = e.note || '';
+      document.getElementById('entryDelBtn').classList.remove('hidden');
+    } else {
+      document.getElementById('entryModalTitle').textContent = 'Новая покупка';
+      document.getElementById('entryDate').value = todayISO();
+      document.getElementById('entryAmount').value = '';
+      document.getElementById('entryQty').value = '';
+      document.getElementById('entryNote').value = '';
+      document.getElementById('entryDelBtn').classList.add('hidden');
+    }
+    openModal('entryModal');
+  }
+  function saveEntry() {
+    const c = curCat(); if (!c) return;
+    const date = document.getElementById('entryDate').value || todayISO();
+    const amount = parseFloat(document.getElementById('entryAmount').value) || 0;
+    const qtyRaw = document.getElementById('entryQty').value;
+    const qty = qtyRaw === '' ? null : (parseFloat(qtyRaw) || null);
+    const note = document.getElementById('entryNote').value.trim();
+    if (editingEntryId) {
+      const e = c.entries.find(x => x.id === editingEntryId);
+      e.date = date; e.amount = amount; e.qty = qty; e.note = note;
+    } else {
+      c.entries.push({ id: uid(), date, amount, qty, note });
+    }
+    save(); closeModal('entryModal'); renderDetail();
+  }
+  function deleteEntry() { if (editingEntryId) deleteEntryById(editingEntryId, true); }
+  function deleteEntryById(id, fromModal) {
+    if (!fromModal && !confirm('Удалить эту покупку?')) return;
+    const c = curCat(); if (!c) return;
+    c.entries = c.entries.filter(e => e.id !== id);
+    save(); closeModal('entryModal'); renderDetail();
+  }
+
+  // ─────────── Group manager ───────────
+  function openGroupModal() { renderGroupList(); openModal('groupModal'); }
+  function renderGroupList() {
+    const wrap = document.getElementById('grpList');
+    if (!data.groups.length) {
+      wrap.innerHTML = '<div class="empty" style="padding:20px 0 16px"><p>Групп пока нет.<br>Создайте: Химия, Ребёнок, Машина, Подписки…</p></div>';
+      return;
+    }
+    wrap.innerHTML = data.groups.map(g => `
+      <div class="grp-row">
+        <span class="grp-emoji" onclick="cycleGroupEmoji('${g.id}')">${g.emoji}</span>
+        <input value="${esc(g.name)}" oninput="renameGroup('${g.id}', this.value)" placeholder="Название группы">
+        <button class="grp-del" onclick="deleteGroup('${g.id}')">🗑</button>
+      </div>`).join('');
+  }
+  function addGroup() {
+    data.groups.push({ id: uid(), name: '', emoji: GROUP_EMOJIS[data.groups.length % GROUP_EMOJIS.length] });
+    save(); renderGroupList();
+    const inputs = document.querySelectorAll('#grpList input');
+    if (inputs.length) inputs[inputs.length-1].focus();
+  }
+  function renameGroup(id, val) {
+    const g = groupById(id); if (g) { g.name = val; save(); }
+  }
+  function cycleGroupEmoji(id) {
+    const g = groupById(id); if (!g) return;
+    const i = GROUP_EMOJIS.indexOf(g.emoji);
+    g.emoji = GROUP_EMOJIS[(i + 1) % GROUP_EMOJIS.length];
+    save(); renderGroupList();
+  }
+  function deleteGroup(id) {
+    const cats = data.cats.filter(c => c.groupId === id);
+    const msg = cats.length ? `Удалить группу? ${cats.length} товаров станут «Без группы».` : 'Удалить группу?';
+    if (!confirm(msg)) return;
+    data.cats.forEach(c => { if (c.groupId === id) c.groupId = null; });
+    data.groups = data.groups.filter(g => g.id !== id);
+    if (activeFilter === id) activeFilter = 'all';
+    save(); renderGroupList(); renderChips();
+  }
+
+  // ─────────── Modal utils ───────────
+  function openModal(id) { document.getElementById(id).classList.add('open'); }
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+    if (id === 'groupModal') { renderChips(); renderList(); }
+  }
+  document.querySelectorAll('.modal-bg').forEach(bg => {
+    bg.addEventListener('click', e => { if (e.target === bg) closeModal(bg.id); });
+  });
+
+  // ─────────── Init ───────────
+  renderList();
+  initFirebase();
+  </script>
+</body>
+</html>
