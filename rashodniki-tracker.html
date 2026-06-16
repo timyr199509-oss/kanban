@@ -275,6 +275,10 @@
     }
     .field input:focus, .field textarea:focus { border-color: var(--green); }
     .field textarea { resize: vertical; min-height: 70px; line-height: 1.4; }
+    .field input.total-view {
+      background: rgba(52,199,89,0.10); border-color: rgba(52,199,89,0.30);
+      color: var(--green); font-weight: 800; font-size: 20px; letter-spacing: -0.3px;
+    }
     .field-row { display: flex; gap: 10px; }
     .field-row .field { flex: 1; }
 
@@ -399,19 +403,23 @@
   <div class="modal-bg" id="entryModal">
     <div class="modal">
       <h2 id="entryModalTitle">Новая покупка</h2>
+      <div class="field">
+        <label>Дата</label>
+        <input type="date" id="entryDate">
+      </div>
       <div class="field-row">
         <div class="field">
-          <label>Дата</label>
-          <input type="date" id="entryDate">
+          <label>Цена за <span id="entryUnitLbl">шт</span>, ₽</label>
+          <input type="number" id="entryPrice" inputmode="decimal" placeholder="345" autocomplete="off" oninput="updateTotal()">
         </div>
         <div class="field">
-          <label>Сумма, ₽</label>
-          <input type="number" id="entryAmount" inputmode="decimal" placeholder="690" autocomplete="off">
+          <label>Количество</label>
+          <input type="number" id="entryQty" inputmode="decimal" placeholder="1" autocomplete="off" oninput="updateTotal()">
         </div>
       </div>
       <div class="field">
-        <label>Количество (необязательно)</label>
-        <input type="number" id="entryQty" inputmode="decimal" placeholder="1" autocomplete="off">
+        <label>Итого</label>
+        <input type="text" id="entryTotalView" class="total-view" readonly value="0 ₽">
       </div>
       <div class="field">
         <label>Заметка</label>
@@ -755,7 +763,9 @@
       const olderIdx = s.entries.findIndex(x => x.id === e.id) - 1;
       let gap = '';
       if (olderIdx >= 0) gap = `<span class="entry-gap">↑ через ${pluralDays(daysBetween(s.entries[olderIdx].date, e.date))} после прошлой</span>`;
-      const qty = e.qty ? `<div class="entry-qty">${e.qty}${c.unit ? ' ' + esc(c.unit) : ' шт'}</div>` : '';
+      const u = c.unit ? ' ' + esc(c.unit) : ' шт';
+      const up = e.unitPrice != null ? e.unitPrice : (e.qty ? (e.amount||0)/e.qty : (e.amount||0));
+      const qty = (e.qty && e.qty !== 1) ? `<div class="entry-qty">${e.qty}${u} × ${fmtMoney(up)} ₽</div>` : '';
       const note = e.note ? `<div class="entry-note">${esc(e.note)}</div>` : '';
       return `<div class="entry">
         <div class="entry-top">
@@ -840,39 +850,49 @@
 
   // ─────────── Entry modal ───────────
   let editingEntryId = null;
+  function updateTotal() {
+    const price = parseFloat(document.getElementById('entryPrice').value) || 0;
+    const qtyRaw = document.getElementById('entryQty').value;
+    const qty = qtyRaw === '' ? 1 : (parseFloat(qtyRaw) || 0);
+    document.getElementById('entryTotalView').value = fmtMoney(price * qty) + ' ₽';
+  }
   function openEntryModal(id) {
     const c = curCat(); if (!c) return;
     editingEntryId = id || null;
+    document.getElementById('entryUnitLbl').textContent = c.unit || 'шт';
     if (editingEntryId) {
       const e = c.entries.find(x => x.id === editingEntryId);
+      const up = e.unitPrice != null ? e.unitPrice : (e.qty ? (e.amount||0)/e.qty : (e.amount||0));
       document.getElementById('entryModalTitle').textContent = 'Покупка';
       document.getElementById('entryDate').value = e.date;
-      document.getElementById('entryAmount').value = e.amount ?? '';
+      document.getElementById('entryPrice').value = up || '';
       document.getElementById('entryQty').value = e.qty ?? '';
       document.getElementById('entryNote').value = e.note || '';
       document.getElementById('entryDelBtn').classList.remove('hidden');
     } else {
       document.getElementById('entryModalTitle').textContent = 'Новая покупка';
       document.getElementById('entryDate').value = todayISO();
-      document.getElementById('entryAmount').value = '';
+      document.getElementById('entryPrice').value = '';
       document.getElementById('entryQty').value = '';
       document.getElementById('entryNote').value = '';
       document.getElementById('entryDelBtn').classList.add('hidden');
     }
+    updateTotal();
     openModal('entryModal');
   }
   function saveEntry() {
     const c = curCat(); if (!c) return;
     const date = document.getElementById('entryDate').value || todayISO();
-    const amount = parseFloat(document.getElementById('entryAmount').value) || 0;
+    const unitPrice = parseFloat(document.getElementById('entryPrice').value) || 0;
     const qtyRaw = document.getElementById('entryQty').value;
     const qty = qtyRaw === '' ? null : (parseFloat(qtyRaw) || null);
+    const amount = unitPrice * (qty || 1); // итого = цена за шт × количество
     const note = document.getElementById('entryNote').value.trim();
     if (editingEntryId) {
       const e = c.entries.find(x => x.id === editingEntryId);
-      e.date = date; e.amount = amount; e.qty = qty; e.note = note;
+      e.date = date; e.unitPrice = unitPrice; e.qty = qty; e.amount = amount; e.note = note;
     } else {
-      c.entries.push({ id: uid(), date, amount, qty, note });
+      c.entries.push({ id: uid(), date, unitPrice, qty, amount, note });
     }
     save(); closeModal('entryModal'); renderDetail();
   }
