@@ -618,6 +618,8 @@
     const n = entries.length;
     const total = entries.reduce((s,e) => s + (e.amount||0), 0);
     const avgPrice = n ? total / n : 0;
+    const totalQty = entries.reduce((s,e) => s + (e.qty || 1), 0);
+    const avgUnitPrice = totalQty ? total / totalQty : avgPrice; // средняя цена за 1 штуку
     let avgInterval = null;
     if (n >= 2) avgInterval = daysBetween(entries[0].date, entries[n-1].date) / (n - 1);
 
@@ -638,7 +640,7 @@
       daysSinceLast = daysBetween(entries[n-1].date, todayISO());
       if (avgInterval) daysToNext = Math.round(avgInterval - daysSinceLast);
     }
-    return { entries, n, total, avgPrice, avgInterval, monthSpend, monthCount, projected, perMonthQty, daysSinceLast, daysToNext };
+    return { entries, n, total, avgPrice, avgUnitPrice, totalQty, avgInterval, monthSpend, monthCount, projected, perMonthQty, daysSinceLast, daysToNext };
   }
   function statusOf(s) {
     if (s.daysToNext === null) return 'none';
@@ -780,7 +782,7 @@
     const boxes = [];
     boxes.push(box('В среднем / мес', s.projected ? fmtMoney(s.projected) + '<span> ₽</span>' : '—', s.projected ? 'прогноз расходов' : 'нужно ≥2 покупок'));
     boxes.push(box('Хватает на', s.avgInterval ? Math.round(s.avgInterval) + '<span> дн</span>' : '—', s.avgInterval ? 'средний интервал' : 'нужно ≥2 покупок'));
-    boxes.push(box('Средняя цена', s.avgPrice ? fmtMoney(s.avgPrice) + '<span> ₽</span>' : '—', 'за покупку'));
+    boxes.push(box('Средняя цена', s.avgUnitPrice ? fmtMoney(s.avgUnitPrice) + '<span> ₽</span>' : '—', 'за 1' + (c.unit ? ' ' + esc(c.unit) : ' шт')));
     boxes.push(box('Нужно / мес', s.perMonthQty ? Math.ceil(s.perMonthQty) + '<span>' + unit + '</span>' : '—', 'чтобы закупиться разом'));
     boxes.push(box('Всего потрачено', fmtMoney(s.total) + '<span> ₽</span>', s.n + ' покупок' + (g ? ' · ' + g.name : ''), true));
     document.getElementById('statsGrid').innerHTML = boxes.join('');
