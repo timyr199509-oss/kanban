@@ -63,6 +63,29 @@
     .sync-ing { background: rgba(255,200,60,0.16); color: #c9a825; }
     .sync-err { background: rgba(220,80,80,0.16);  color: #d05050; }
 
+    /* ── View toggle (Товары / Месяцы) ── */
+    .view-toggle {
+      display: flex; gap: 6px; background: var(--card2);
+      border: 1px solid var(--border); border-radius: 14px; padding: 4px; margin: 14px 0 2px;
+    }
+    .vt-btn {
+      flex: 1; padding: 11px; border-radius: 10px; border: none; background: none;
+      color: var(--muted2); font-size: 14px; font-weight: 700; cursor: pointer;
+      font-family: inherit; transition: all 0.15s; -webkit-tap-highlight-color: transparent;
+    }
+    .vt-btn.active { background: var(--text); color: #000; }
+
+    /* product picker rows */
+    .pick-cat-row {
+      display: flex; align-items: center; gap: 12px;
+      background: #111114; border: 1.5px solid var(--border);
+      border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; cursor: pointer;
+    }
+    .pick-cat-row:active { border-color: var(--green); }
+    .pick-cat-row .pc-emoji { font-size: 22px; }
+    .pick-cat-row .pc-name { font-size: 15px; font-weight: 600; }
+    .pick-cat-row .pc-grp { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
     /* ── Month total summary ── */
     .month-summary {
       background: var(--card);
@@ -358,6 +381,11 @@
       <span class="sync-pill sync-ing" id="syncPill">Подключение…</span>
     </div>
 
+    <div class="view-toggle">
+      <button class="vt-btn active" onclick="showCats()">Товары</button>
+      <button class="vt-btn" onclick="showMonths()">По месяцам</button>
+    </div>
+
     <div class="month-summary">
       <div class="ms-label">Расходы за <span id="msMonthName"></span></div>
       <div class="ms-value">0<span> ₽</span></div>
@@ -372,6 +400,46 @@
     <div id="catList"></div>
 
     <button class="add-btn" onclick="openCatModal()">+ Новый товар</button>
+  </div>
+
+  <!-- ════════ MONTHS VIEW ════════ -->
+  <div id="monthsView" class="hidden">
+    <div class="header">
+      <h1>Расходники</h1>
+    </div>
+
+    <div class="view-toggle">
+      <button class="vt-btn" onclick="showCats()">Товары</button>
+      <button class="vt-btn active" onclick="showMonths()">По месяцам</button>
+    </div>
+
+    <div class="month-summary">
+      <div class="ms-label">Всего за всё время</div>
+      <div class="ms-value" id="mvTotal">0<span> ₽</span></div>
+      <div class="ms-sub"><div><b id="mvMonths">0</b>месяцев с покупками</div></div>
+    </div>
+
+    <div class="section-label">Месяцы</div>
+    <div id="monthsList"></div>
+  </div>
+
+  <!-- ════════ MONTH DETAIL VIEW ════════ -->
+  <div id="monthDetailView" class="hidden">
+    <div class="header">
+      <button class="icon-btn" onclick="showMonths()" style="font-size:22px;">‹</button>
+      <h1 id="mdTitle" style="font-size:21px;"></h1>
+      <span style="width:38px;flex-shrink:0;"></span>
+    </div>
+
+    <div class="month-summary">
+      <div class="ms-label" id="mdLabel">Итого за месяц</div>
+      <div class="ms-value" id="mdTotal">0<span> ₽</span></div>
+      <div class="ms-sub"><div><b id="mdCount">0</b>покупок</div></div>
+    </div>
+
+    <button class="add-btn sticky" onclick="openMonthAdd()">+ Добавить покупку</button>
+
+    <div id="monthDetailList"></div>
   </div>
 
   <!-- ════════ DETAIL VIEW ════════ -->
@@ -469,6 +537,17 @@
       <button class="grp-add" onclick="addGroup()">+ Добавить группу</button>
       <div class="btn-row">
         <button class="btn btn-primary" onclick="closeModal('groupModal')">Готово</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ PRODUCT PICKER MODAL (add from month) ════════ -->
+  <div class="modal-bg" id="pickCatModal">
+    <div class="modal">
+      <h2>Какой товар?</h2>
+      <div id="pickCatList"></div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="closeModal('pickCatModal')">Отмена</button>
       </div>
     </div>
   </div>
@@ -574,20 +653,21 @@
     fbSaveTimer = setTimeout(saveToFirebase, 700);
   }
 
-  function rerender() {
-    if (currentCatId && curCat()) renderDetail();
-    else { if (currentCatId && !curCat()) currentCatId = null; showCurrentView(); }
+  // ─────────── Navigation ───────────
+  let screen = 'cats'; // 'cats' | 'months' | 'monthDetail' | 'product'
+  let currentMonth = null;
+  function hideAllViews() {
+    ['listView','monthsView','monthDetailView','detailView'].forEach(id =>
+      document.getElementById(id).classList.add('hidden'));
   }
-  function showCurrentView() {
-    if (currentCatId && curCat()) {
-      document.getElementById('listView').classList.add('hidden');
-      document.getElementById('detailView').classList.remove('hidden');
-      renderDetail();
-    } else {
-      document.getElementById('detailView').classList.add('hidden');
-      document.getElementById('listView').classList.remove('hidden');
-      renderList();
-    }
+  function showView(id) { hideAllViews(); document.getElementById(id).classList.remove('hidden'); window.scrollTo(0,0); }
+
+  function rerender() {
+    if (screen === 'product') {
+      if (curCat()) renderDetail(); else { currentCatId = null; showCats(); }
+    } else if (screen === 'months') renderMonths();
+    else if (screen === 'monthDetail') renderMonthDetail(currentMonth);
+    else renderList();
   }
 
   // ─────────── Helpers ───────────
@@ -774,23 +854,121 @@
   }
   function setFilter(f) { activeFilter = f; renderList(); }
 
-  // ─────────── Detail view ───────────
-  let currentCatId = null;
-  function openDetail(id) {
-    currentCatId = id;
-    document.getElementById('listView').classList.add('hidden');
-    document.getElementById('detailView').classList.remove('hidden');
-    window.scrollTo(0,0);
-    renderDetail();
+  // ─────────── Screen switchers ───────────
+  let currentCatId = null, productReturn = 'cats';
+  function showCats() { screen = 'cats'; currentCatId = null; showView('listView'); renderList(); }
+  function showMonths() { screen = 'months'; showView('monthsView'); renderMonths(); }
+  function showMonthDetail(ym) { screen = 'monthDetail'; currentMonth = ym; showView('monthDetailView'); renderMonthDetail(ym); }
+  function openDetail(id, from) {
+    screen = 'product'; currentCatId = id; productReturn = from || 'cats';
+    showView('detailView'); renderDetail();
   }
+  // back from product → return to wherever we came from
   function showList() {
-    currentCatId = null;
-    document.getElementById('detailView').classList.add('hidden');
-    document.getElementById('listView').classList.remove('hidden');
-    renderList();
-    window.scrollTo(0,0);
+    if (productReturn && productReturn.month) showMonthDetail(productReturn.month);
+    else showCats();
   }
   function curCat() { return data.cats.find(c => c.id === currentCatId); }
+
+  // ─────────── Months view ───────────
+  function buildMonths() {
+    const map = {};
+    data.cats.forEach(c => (c.entries||[]).forEach(e => {
+      const ym = (e.date||'').slice(0,7); if (!ym) return;
+      (map[ym] = map[ym] || []).push({ ...e, catId: c.id, catName: c.name, emoji: c.emoji, unit: c.unit, groupId: c.groupId });
+    }));
+    return Object.keys(map).sort().reverse().map(ym => {
+      const items = map[ym].sort((a,b) => b.date.localeCompare(a.date));
+      return { ym, items, total: items.reduce((s,i)=>s+(i.amount||0),0), count: items.length };
+    });
+  }
+  function ymLabel(ym) { const [y,m] = ym.split('-').map(Number); return MONTHS_NOM[m-1] + ' ' + y; }
+
+  function renderMonths() {
+    const months = buildMonths();
+    const grand = months.reduce((s,m)=>s+m.total,0);
+    document.getElementById('mvTotal').innerHTML = fmtMoney(grand) + '<span> ₽</span>';
+    document.getElementById('mvMonths').textContent = months.length;
+    const wrap = document.getElementById('monthsList');
+    if (!months.length) {
+      wrap.innerHTML = '<div class="empty"><div class="icon">📅</div><p>Пока нет покупок.<br>Месяцы появятся, как только добавите покупки.</p></div>';
+      return;
+    }
+    wrap.innerHTML = months.map(mo => `
+      <div class="cat-card" onclick="showMonthDetail('${mo.ym}')">
+        <div class="cat-emoji">📅</div>
+        <div class="cat-info">
+          <div class="cat-name">${ymLabel(mo.ym)}</div>
+          <div class="cat-meta">${mo.count} покупок</div>
+        </div>
+        <div class="cat-right"><div class="cat-month">${fmtMoney(mo.total)}<span> ₽</span></div></div>
+      </div>`).join('');
+  }
+
+  function renderMonthDetail(ym) {
+    const mo = buildMonths().find(m => m.ym === ym);
+    document.getElementById('mdTitle').textContent = ym ? ymLabel(ym) : '';
+    document.getElementById('mdLabel').textContent = 'Итого за ' + (ym ? ymLabel(ym).toLowerCase() : 'месяц');
+    if (!mo) {
+      document.getElementById('mdTotal').innerHTML = '0<span> ₽</span>';
+      document.getElementById('mdCount').textContent = '0';
+      document.getElementById('monthDetailList').innerHTML = '<div class="empty"><div class="icon">🧾</div><p>В этом месяце покупок нет.</p></div>';
+      return;
+    }
+    document.getElementById('mdTotal').innerHTML = fmtMoney(mo.total) + '<span> ₽</span>';
+    document.getElementById('mdCount').textContent = mo.count;
+
+    // group purchases by group, with subtotals
+    const order = [...data.groups.map(g => g.id), null];
+    let html = '';
+    order.forEach(gid => {
+      const items = mo.items.filter(i => (i.groupId || null) === gid || (gid === null && (!i.groupId || !groupById(i.groupId))));
+      if (!items.length) return;
+      const g = gid ? groupById(gid) : null;
+      const sub = items.reduce((s,i)=>s+(i.amount||0),0);
+      const title = g ? (g.emoji + ' ' + g.name) : 'Без группы';
+      html += `<div class="section-label"><span>${esc(title)}</span><span class="sl-sum"><b>${fmtMoney(sub)} ₽</b></span></div>`;
+      html += items.map(monthRowHTML).join('');
+    });
+    document.getElementById('monthDetailList').innerHTML = html;
+  }
+  function monthRowHTML(i) {
+    const u = i.unit ? ' ' + esc(i.unit) : ' шт';
+    const up = i.unitPrice != null ? i.unitPrice : (i.qty ? (i.amount||0)/i.qty : (i.amount||0));
+    const qty = (i.qty && i.qty !== 1) ? `<div class="entry-qty">${i.qty}${u} × ${fmtMoney(up)} ₽</div>` : '';
+    const note = i.note ? `<div class="entry-note">${esc(i.note)}</div>` : '';
+    return `<div class="entry" style="cursor:pointer" onclick="openDetail('${i.catId}', {month:'${currentMonth}'})">
+      <div class="entry-top">
+        <div class="entry-date">${i.emoji||'📦'} ${esc(i.catName)} · ${fmtDate(i.date)}</div>
+        <div class="entry-amount">${fmtMoney(i.amount||0)}<span> ₽</span></div>
+      </div>
+      ${qty}${note}
+    </div>`;
+  }
+
+  // add a purchase from within a month
+  let monthAddYm = null;
+  function openMonthAdd() {
+    monthAddYm = currentMonth;
+    if (!data.cats.length) { alert('Сначала создайте товар во вкладке «Товары».'); return; }
+    const wrap = document.getElementById('pickCatList');
+    wrap.innerHTML = data.cats.map(c => {
+      const g = groupById(c.groupId);
+      return `<div class="pick-cat-row" onclick="pickCatForMonth('${c.id}')">
+        <span class="pc-emoji">${c.emoji||'📦'}</span>
+        <div><div class="pc-name">${esc(c.name)}</div>${g?`<div class="pc-grp">${esc(g.name)}</div>`:''}</div>
+      </div>`;
+    }).join('');
+    openModal('pickCatModal');
+  }
+  function pickCatForMonth(catId) {
+    currentCatId = catId;
+    closeModal('pickCatModal');
+    openEntryModal();
+    const todayYm = todayISO().slice(0,7);
+    document.getElementById('entryDate').value = (monthAddYm === todayYm) ? todayISO() : monthAddYm + '-15';
+    uiReturn = { month: monthAddYm };
+  }
 
   function renderDetail() {
     const c = curCat();
@@ -947,7 +1125,11 @@
   }
 
   // ─────────── Entry modal ───────────
-  let editingEntryId = null;
+  let editingEntryId = null, uiReturn = null;
+  function afterEntryChange() {
+    if (uiReturn && uiReturn.month) { const ym = uiReturn.month; uiReturn = null; showMonthDetail(ym); }
+    else renderDetail();
+  }
   function updateTotal() {
     const price = parseFloat(document.getElementById('entryPrice').value) || 0;
     const qtyRaw = document.getElementById('entryQty').value;
@@ -956,6 +1138,7 @@
   }
   function openEntryModal(id) {
     const c = curCat(); if (!c) return;
+    uiReturn = null;
     editingEntryId = id || null;
     document.getElementById('entryUnitLbl').textContent = c.unit || 'шт';
     if (editingEntryId) {
@@ -992,14 +1175,14 @@
     } else {
       c.entries.push({ id: uid(), date, unitPrice, qty, amount, note });
     }
-    save(); closeModal('entryModal'); renderDetail();
+    save(); closeModal('entryModal'); afterEntryChange();
   }
   function deleteEntry() { if (editingEntryId) deleteEntryById(editingEntryId, true); }
   function deleteEntryById(id, fromModal) {
     if (!fromModal && !confirm('Удалить эту покупку?')) return;
     const c = curCat(); if (!c) return;
     c.entries = c.entries.filter(e => e.id !== id);
-    save(); closeModal('entryModal'); renderDetail();
+    save(); closeModal('entryModal'); afterEntryChange();
   }
 
   // ─────────── Group manager ───────────
