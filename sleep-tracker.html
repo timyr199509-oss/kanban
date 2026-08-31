@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Сон и день</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0c0c0e;
+  --card: #17171a;
+  --card2: #1f1f23;
+  --border: #2a2a30;
+  --border2: #3a3a44;
+  --text: #ffffff;
+  --muted: #55555f;
+  --muted2: #888898;
+
+  /* Шкала 1–10. Различима по СВЕТЛОТЕ, а не только по оттенку,
+     плюс цифра видна всегда — цвет никогда не единственный носитель смысла. */
+  --s1:  #4a1416;
+  --s2:  #6b1d1a;
+  --s3:  #8c3312;
+  --s4:  #a85a10;
+  --s5:  #bd7f0c;
+  --s6:  #c9a00a;
+  --s7:  #a8b30d;
+  --s8:  #6fae1c;
+  --s9:  #3f9e2a;
+  --s10: #34C759;
+
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+html { background: var(--bg); }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  padding: 0 16px calc(48px + env(safe-area-inset-bottom));
+  max-width: 480px;
+  margin: 0 auto;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Шапка ── */
+.header { padding: calc(40px + env(safe-area-inset-top)) 0 20px; }
+.header h1 {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.6px;
+  line-height: 1.1;
+}
+.header .sub {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--muted2);
+  letter-spacing: 0.1px;
+}
+
+/* ── Сводка ── */
+.summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.stat {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px 14px 12px;
+}
+.stat-label {
+  font-size: 12px;
+  color: var(--muted2);
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  margin-bottom: 6px;
+}
+.stat-value {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.stat-value.empty { color: var(--muted); font-size: 26px; }
+.stat-days { font-size: 11px; color: var(--muted); margin-top: 5px; }
+
+/* ── Связь сна и дня ── */
+.link-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 15px 15px 14px;
+  margin-bottom: 22px;
+}
+.link-title {
+  font-size: 12px;
+  color: var(--muted2);
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  margin-bottom: 12px;
+}
+.link-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 9px;
+}
+.link-row:last-of-type { margin-bottom: 0; }
+.link-key {
+  font-size: 12px;
+  color: var(--muted2);
+  width: 112px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.link-bar-wrap {
+  flex: 1;
+  height: 22px;
+  background: var(--card2);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.link-bar {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 400ms var(--ease-out);
+  min-width: 2px;
+}
+.link-val {
+  font-size: 14px;
+  font-weight: 700;
+  width: 34px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+.link-note {
+  margin-top: 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted2);
+}
+.link-note b { color: var(--text); font-weight: 600; }
+
+/* ── Дни ── */
+.days-title {
+  font-size: 12px;
+  color: var(--muted2);
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  margin-bottom: 10px;
+  padding-left: 2px;
+}
+
+.day {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  transition: border-color 200ms var(--ease-out);
+}
+.day.today { border-color: var(--border2); }
+.day.open { border-color: var(--border2); }
+
+.day-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  transition: transform 140ms var(--ease-out);
+}
+.day-head:active { transform: scale(0.985); }
+
+.day-date {
+  width: 60px;
+  flex-shrink: 0;
+}
+.day-num {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  font-variant-numeric: tabular-nums;
+}
+.day-wd {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+.day.weekend .day-wd { color: #7a6a4a; }
+.day.today .day-num { color: #34C759; }
+.day.today .day-wd { color: #34C759; opacity: 0.7; }
+
+.day-marks { display: flex; gap: 8px; flex: 1; }
+.mark {
+  flex: 1;
+  height: 38px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 500;
+}
+.mark.filled { border-color: transparent; color: #fff; }
+.mark-tag { font-size: 10px; opacity: 0.85; letter-spacing: 0.3px; }
+.mark-num {
+  font-size: 17px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.3px;
+}
+.mark.filled .mark-tag { opacity: 0.75; }
+
+.day-chev {
+  width: 14px;
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+  transition: transform 240ms var(--ease-out), color 200ms ease;
+}
+.day.open .day-chev { transform: rotate(90deg); color: var(--muted2); }
+
+/* ── Раскрытие ── */
+.day-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 260ms var(--ease-out);
+}
+.day.open .day-body { grid-template-rows: 1fr; }
+.day-body-inner { overflow: hidden; }
+.day-body-pad { padding: 2px 14px 14px; }
+
+.pick-group { margin-top: 12px; }
+.pick-group:first-child { margin-top: 4px; }
+.pick-label {
+  font-size: 12px;
+  color: var(--muted2);
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+.pick-label b { color: var(--text); font-weight: 600; }
+
+.pick-rows { display: flex; flex-direction: column; gap: 6px; }
+.pick-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+
+.pick {
+  height: 44px;
+  border-radius: 10px;
+  background: var(--card2);
+  border: 1.5px solid var(--border);
+  color: var(--muted2);
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: transform 130ms var(--ease-out), border-color 160ms ease, color 160ms ease;
+}
+.pick:active { transform: scale(0.92); }
+.pick.on {
+  color: #fff;
+  border-color: transparent;
+  font-weight: 700;
+}
+
+.pick-clear {
+  margin-top: 10px;
+  width: 100%;
+  height: 38px;
+  border-radius: 10px;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: transform 130ms var(--ease-out), color 160ms ease, border-color 160ms ease;
+}
+.pick-clear:active { transform: scale(0.98); color: #ff5a52; border-color: #5a2320; }
+
+/* ── Перенос между устройствами ── */
+.tools { margin-top: 26px; }
+.tools-note {
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+.tools-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tool-btn {
+  height: 42px;
+  border-radius: 11px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--muted2);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: transform 130ms var(--ease-out), color 160ms ease;
+}
+.tool-btn:active { transform: scale(0.97); color: var(--text); }
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(24px + env(safe-area-inset-bottom));
+  transform: translateX(-50%) translateY(140%);
+  background: #26262c;
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 12px 18px;
+  border-radius: 12px;
+  max-width: calc(100% - 32px);
+  text-align: center;
+  transition: transform 340ms var(--ease-out), opacity 340ms var(--ease-out);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 50;
+}
+.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+  .day-body { transition: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Сон и день</h1>
+  <div class="sub" id="sub">Сентябрь 2026</div>
+</div>
+
+<div class="summary">
+  <div class="stat">
+    <div class="stat-label">Средний сон</div>
+    <div class="stat-value empty" id="avgSleep">—</div>
+    <div class="stat-days" id="daysSleep">нет записей</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Средний день</div>
+    <div class="stat-value empty" id="avgDay">—</div>
+    <div class="stat-days" id="daysDay">нет записей</div>
+  </div>
+</div>
+
+<div class="link-card">
+  <div class="link-title">КАК СОН ВЛИЯЕТ НА ДЕНЬ</div>
+  <div class="link-row">
+    <div class="link-key">выспался 7–10</div>
+    <div class="link-bar-wrap"><div class="link-bar" id="barGood" style="width:0"></div></div>
+    <div class="link-val" id="valGood">—</div>
+  </div>
+  <div class="link-row">
+    <div class="link-key">не выспался 1–5</div>
+    <div class="link-bar-wrap"><div class="link-bar" id="barBad" style="width:0"></div></div>
+    <div class="link-val" id="valBad">—</div>
+  </div>
+  <div class="link-note" id="linkNote">Заполни хотя бы неделю — тогда станет видно, есть ли связь.</div>
+</div>
+
+<div class="days-title">СЕНТЯБРЬ</div>
+<div id="days"></div>
+
+<div class="tools">
+  <div class="tools-note">
+    Данные лежат в этом браузере. На телефоне и на компьютере они свои —
+    чтобы перенести, скопируй на одном устройстве и вставь на другом.
+  </div>
+  <div class="tools-row">
+    <button class="tool-btn" id="btnCopy">Скопировать</button>
+    <button class="tool-btn" id="btnPaste">Вставить</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var YEAR = 2026, MONTH = 9, DAYS = 30;
+  var KEY = 'sleepday-2026-09';
+  var WD = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
+
+  var state = load();
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) { return {}; }
+  }
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); }
+    catch (e) { toast('Не удалось сохранить: ' + e.message); }
+  }
+
+  function color(v) {
+    return getComputedStyle(document.documentElement)
+      .getPropertyValue('--s' + v).trim();
+  }
+
+  function todayNum() {
+    var d = new Date();
+    if (d.getFullYear() === YEAR && d.getMonth() + 1 === MONTH) return d.getDate();
+    return 0;
+  }
+
+  var TODAY = todayNum();
+
+  /* ── Отрисовка списка дней ── */
+  var daysEl = document.getElementById('days');
+
+  function buildDays() {
+    var html = '';
+    for (var i = 1; i <= DAYS; i++) {
+      var date = new Date(YEAR, MONTH - 1, i);
+      var wd = date.getDay();
+      var cls = 'day';
+      if (wd === 0 || wd === 6) cls += ' weekend';
+      if (i === TODAY) cls += ' today';
+
+      html +=
+        '<div class="' + cls + '" data-d="' + i + '">' +
+          '<div class="day-head" data-toggle="' + i + '">' +
+            '<div class="day-date">' +
+              '<div class="day-num">' + i + '</div>' +
+              '<div class="day-wd">' + WD[wd] + '</div>' +
+            '</div>' +
+            '<div class="day-marks">' +
+              mark(i, 'sleep') +
+              mark(i, 'day') +
+            '</div>' +
+            '<div class="day-chev">›</div>' +
+          '</div>' +
+          '<div class="day-body"><div class="day-body-inner"><div class="day-body-pad">' +
+            group(i, 'sleep', 'Сон', 'как выспался') +
+            group(i, 'day', 'День', 'как прошёл рабочий день') +
+            '<button class="pick-clear" data-clear="' + i + '">Очистить день</button>' +
+          '</div></div></div>' +
+        '</div>';
+    }
+    daysEl.innerHTML = html;
+  }
+
+  function mark(i, kind) {
+    var v = state[i] && state[i][kind];
+    var tag = kind === 'sleep' ? 'СОН' : 'ДЕНЬ';
+    if (!v) {
+      return '<div class="mark" data-mark="' + i + '-' + kind + '">' +
+               '<span class="mark-tag">' + tag + '</span></div>';
+    }
+    return '<div class="mark filled" data-mark="' + i + '-' + kind + '" ' +
+             'style="background:' + color(v) + '">' +
+             '<span class="mark-tag">' + tag + '</span>' +
+             '<span class="mark-num">' + v + '</span></div>';
+  }
+
+  function group(i, kind, title, hint) {
+    var cur = (state[i] && state[i][kind]) || 0;
+    var rows = '';
+    for (var r = 0; r < 2; r++) {
+      rows += '<div class="pick-row">';
+      for (var c = 1; c <= 5; c++) {
+        var v = r * 5 + c;
+        var on = v === cur;
+        rows += '<button class="pick' + (on ? ' on' : '') + '" ' +
+                'data-set="' + i + '-' + kind + '-' + v + '"' +
+                (on ? ' style="background:' + color(v) + '"' : '') +
+                '>' + v + '</button>';
+      }
+      rows += '</div>';
+    }
+    return '<div class="pick-group">' +
+             '<div class="pick-label"><b>' + title + '</b> — ' + hint + '</div>' +
+             '<div class="pick-rows">' + rows + '</div>' +
+           '</div>';
+  }
+
+  /* ── Пересчёт сводки ── */
+  function refreshStats() {
+    var sleep = [], day = [], good = [], bad = [];
+
+    for (var i = 1; i <= DAYS; i++) {
+      var e = state[i];
+      if (!e) continue;
+      if (e.sleep) sleep.push(e.sleep);
+      if (e.day) day.push(e.day);
+      if (e.sleep && e.day) {
+        if (e.sleep >= 7) good.push(e.day);
+        else if (e.sleep <= 5) bad.push(e.day);
+      }
+    }
+
+    setStat('avgSleep', 'daysSleep', sleep);
+    setStat('avgDay', 'daysDay', day);
+
+    var gA = avg(good), bA = avg(bad);
+    setBar('barGood', 'valGood', gA);
+    setBar('barBad', 'valBad', bA);
+
+    var note = document.getElementById('linkNote');
+    if (good.length < 3 || bad.length < 3) {
+      note.textContent = 'Нужно хотя бы по три дня в каждой строке. Сейчас: выспался — ' +
+        good.length + ', не выспался — ' + bad.length + '.';
+    } else {
+      var diff = Math.round((gA - bA) * 10) / 10;
+      var d = Math.abs(diff).toString().replace('.', ',');
+      if (diff >= 1) {
+        note.innerHTML = 'Выспавшись, ты проживаешь день лучше на <b>' + d +
+          '</b> из десяти. Связь есть, и она твоя, не из книжки.';
+      } else if (diff <= -1) {
+        note.innerHTML = 'Пока выходит наоборот: в невыспавшиеся дни оценка выше на <b>' +
+          d + '</b>. Стоит разобрать, что тут ещё влияет.';
+      } else {
+        note.innerHTML = 'Разница пока меньше балла. Либо связи нет, либо мало данных.';
+      }
+    }
+  }
+
+  function avg(a) {
+    if (!a.length) return 0;
+    var s = 0;
+    for (var i = 0; i < a.length; i++) s += a[i];
+    return s / a.length;
+  }
+
+  function setStat(valId, daysId, arr) {
+    var el = document.getElementById(valId), d = document.getElementById(daysId);
+    if (!arr.length) {
+      el.textContent = '—';
+      el.className = 'stat-value empty';
+      el.style.color = '';
+      d.textContent = 'нет записей';
+      return;
+    }
+    var a = avg(arr);
+    el.textContent = (Math.round(a * 10) / 10).toString().replace('.', ',');
+    el.className = 'stat-value';
+    el.style.color = color(Math.max(1, Math.round(a)));
+    d.textContent = arr.length + ' ' + plural(arr.length, 'день', 'дня', 'дней');
+  }
+
+  function setBar(barId, valId, a) {
+    var bar = document.getElementById(barId), val = document.getElementById(valId);
+    if (!a) {
+      bar.style.width = '0';
+      val.textContent = '—';
+      val.style.color = 'var(--muted)';
+      return;
+    }
+    bar.style.width = (a / 10 * 100) + '%';
+    bar.style.background = color(Math.max(1, Math.round(a)));
+    val.textContent = (Math.round(a * 10) / 10).toString().replace('.', ',');
+    val.style.color = '';
+  }
+
+  function plural(n, one, few, many) {
+    var n10 = n % 10, n100 = n % 100;
+    if (n10 === 1 && n100 !== 11) return one;
+    if (n10 >= 2 && n10 <= 4 && (n100 < 10 || n100 >= 20)) return few;
+    return many;
+  }
+
+  /* ── Обновление одной карточки без перерисовки всего ── */
+  function refreshDay(i) {
+    var card = daysEl.querySelector('[data-d="' + i + '"]');
+    if (!card) return;
+    ['sleep', 'day'].forEach(function (kind) {
+      var el = card.querySelector('[data-mark="' + i + '-' + kind + '"]');
+      var v = state[i] && state[i][kind];
+      var tag = kind === 'sleep' ? 'СОН' : 'ДЕНЬ';
+      if (v) {
+        el.className = 'mark filled';
+        el.style.background = color(v);
+        el.innerHTML = '<span class="mark-tag">' + tag + '</span>' +
+                       '<span class="mark-num">' + v + '</span>';
+      } else {
+        el.className = 'mark';
+        el.style.background = '';
+        el.innerHTML = '<span class="mark-tag">' + tag + '</span>';
+      }
+      for (var v2 = 1; v2 <= 10; v2++) {
+        var b = card.querySelector('[data-set="' + i + '-' + kind + '-' + v2 + '"]');
+        if (!b) continue;
+        if (v2 === v) { b.classList.add('on'); b.style.background = color(v2); }
+        else { b.classList.remove('on'); b.style.background = ''; }
+      }
+    });
+  }
+
+  /* ── События ── */
+  daysEl.addEventListener('click', function (e) {
+    var setBtn = e.target.closest('[data-set]');
+    if (setBtn) {
+      var p = setBtn.getAttribute('data-set').split('-');
+      var i = +p[0], kind = p[1], v = +p[2];
+      if (!state[i]) state[i] = {};
+      state[i][kind] = state[i][kind] === v ? 0 : v;
+      if (!state[i].sleep && !state[i].day) delete state[i];
+      save();
+      refreshDay(i);
+      refreshStats();
+      return;
+    }
+
+    var clr = e.target.closest('[data-clear]');
+    if (clr) {
+      var ci = +clr.getAttribute('data-clear');
+      delete state[ci];
+      save();
+      refreshDay(ci);
+      refreshStats();
+      return;
+    }
+
+    var head = e.target.closest('[data-toggle]');
+    if (head) {
+      var card = head.parentElement;
+      var wasOpen = card.classList.contains('open');
+      var opened = daysEl.querySelector('.day.open');
+      if (opened) opened.classList.remove('open');
+      if (!wasOpen) card.classList.add('open');
+    }
+  });
+
+  /* ── Перенос данных ── */
+  var toastEl = document.getElementById('toast'), toastT;
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(function () { toastEl.classList.remove('show'); }, 2600);
+  }
+
+  document.getElementById('btnCopy').addEventListener('click', function () {
+    var text = JSON.stringify(state);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(
+        function () { toast('Скопировано. Вставь на другом устройстве.'); },
+        function (err) { toast('Не скопировалось: ' + err.message); }
+      );
+    } else {
+      window.prompt('Скопируй эту строку вручную:', text);
+    }
+  });
+
+  document.getElementById('btnPaste').addEventListener('click', function () {
+    var text = window.prompt('Вставь сюда строку с другого устройства:');
+    if (text === null) return;
+    text = text.trim();
+    if (!text) { toast('Пустая строка — ничего не менял.'); return; }
+    var data;
+    try { data = JSON.parse(text); }
+    catch (err) { toast('Это не похоже на данные трекера.'); return; }
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      toast('Это не похоже на данные трекера.'); return;
+    }
+    var added = 0;
+    for (var k in data) {
+      var n = +k;
+      if (!(n >= 1 && n <= DAYS)) continue;
+      var e = data[k];
+      if (!e || typeof e !== 'object') continue;
+      var rec = {};
+      if (e.sleep >= 1 && e.sleep <= 10) rec.sleep = +e.sleep;
+      if (e.day >= 1 && e.day <= 10) rec.day = +e.day;
+      if (rec.sleep || rec.day) { state[n] = rec; added++; }
+    }
+    save();
+    buildDays();
+    refreshStats();
+    toast('Перенесено дней: ' + added + '.');
+  });
+
+  /* ── Старт ── */
+  buildDays();
+  refreshStats();
+
+  var sub = document.getElementById('sub');
+  if (TODAY) {
+    sub.textContent = 'Сентябрь 2026 · сегодня ' + TODAY + '-е';
+    var t = daysEl.querySelector('[data-d="' + TODAY + '"]');
+    if (t) setTimeout(function () {
+      t.scrollIntoView({ block: 'center', behavior: 'auto' });
+    }, 60);
+  }
+})();
+</script>
+</body>
+</html>
