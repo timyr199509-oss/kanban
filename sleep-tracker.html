@@ -307,6 +307,24 @@ body {
   margin-bottom: 12px;
 }
 .tools-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tools-row.one { grid-template-columns: 1fr; }
+
+.sync {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+.sync-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.sync-state { font-size: 12px; color: var(--muted2); line-height: 1.45; }
+.sync-state b { color: var(--text); font-weight: 600; }
+.sync-state.on b { color: #34C759; }
 .tool-btn {
   height: 42px;
   border-radius: 11px;
@@ -392,9 +410,19 @@ body {
 <div id="days"></div>
 
 <div class="tools">
+  <div class="sync">
+    <div class="sync-head">
+      <div class="sync-state" id="syncState">Таблица не подключена — данные только в этом браузере.</div>
+    </div>
+    <div class="tools-row" style="margin-top:12px">
+      <button class="tool-btn" id="btnLink">Подключить таблицу</button>
+      <button class="tool-btn" id="btnPull">Обновить</button>
+    </div>
+  </div>
+
   <div class="tools-note">
-    Данные лежат в этом браузере. На телефоне и на компьютере они свои —
-    чтобы перенести, скопируй на одном устройстве и вставь на другом.
+    Без таблицы данные живут только в этом браузере. Перенести вручную:
+    скопируй на одном устройстве и вставь на другом.
   </div>
   <div class="tools-row">
     <button class="tool-btn" id="btnCopy">Скопировать</button>
@@ -704,9 +732,87 @@ body {
     toast('Перенесено дней: ' + added + '.');
   });
 
+  /* ── Связь с Google-таблицей (её заполняет телеграм-бот) ── */
+  var URLKEY = 'sleepday-url';
+  var sheetUrl = '';
+  try { sheetUrl = localStorage.getItem(URLKEY) || ''; } catch (e) {}
+
+  var syncState = document.getElementById('syncState');
+
+  function showSync(text, ok) {
+    syncState.innerHTML = text;
+    syncState.className = 'sync-state' + (ok ? ' on' : '');
+  }
+
+  function paintSync() {
+    if (sheetUrl) showSync('Таблица подключена. Что записал бот — видно здесь.', true);
+    else showSync('Таблица не подключена — данные только в этом браузере.', false);
+  }
+
+  function pull(silent) {
+    if (!sheetUrl) { if (!silent) toast('Сначала подключи таблицу.'); return; }
+    if (!silent) showSync('Загружаю…', false);
+
+    fetch(sheetUrl, { redirect: 'follow' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('сервер ответил ' + r.status);
+        return r.json();
+      })
+      .then(function (res) {
+        if (!res || !res.ok || !res.data) throw new Error('таблица вернула не то, что нужно');
+        var prefix = YEAR + '-' + String(MONTH).padStart(2, '0') + '-';
+        var got = 0;
+        for (var key in res.data) {
+          if (key.indexOf(prefix) !== 0) continue;
+          var d = parseInt(key.slice(8), 10);
+          if (!(d >= 1 && d <= DAYS)) continue;
+          var e = res.data[key], rec = {};
+          if (e.sleep >= 1 && e.sleep <= 10) rec.sleep = +e.sleep;
+          if (e.day >= 1 && e.day <= 10) rec.day = +e.day;
+          if (rec.sleep || rec.day) { state[d] = rec; got++; }
+        }
+        save();
+        buildDays();
+        refreshStats();
+        paintSync();
+        if (!silent) toast('Загружено дней: ' + got + '.');
+      })
+      .catch(function (err) {
+        showSync('Не получилось загрузить: ' + err.message, false);
+        if (!silent) toast('Не получилось: ' + err.message);
+      });
+  }
+
+  document.getElementById('btnLink').addEventListener('click', function () {
+    var v = window.prompt(
+      'Вставь ссылку веб-приложения из Apps Script (заканчивается на /exec):',
+      sheetUrl
+    );
+    if (v === null) return;
+    v = v.trim();
+    if (!v) {
+      sheetUrl = '';
+      try { localStorage.removeItem(URLKEY); } catch (e) {}
+      paintSync();
+      toast('Таблица отключена.');
+      return;
+    }
+    if (v.indexOf('https://script.google.com/') !== 0) {
+      toast('Это не похоже на ссылку Apps Script.');
+      return;
+    }
+    sheetUrl = v;
+    try { localStorage.setItem(URLKEY, v); } catch (e) {}
+    pull(false);
+  });
+
+  document.getElementById('btnPull').addEventListener('click', function () { pull(false); });
+
   /* ── Старт ── */
   buildDays();
   refreshStats();
+  paintSync();
+  if (sheetUrl) pull(true);
 
   var sub = document.getElementById('sub');
   if (TODAY) {
