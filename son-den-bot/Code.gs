@@ -83,6 +83,12 @@ function обработать(update) {
     return;
   }
 
+  // Удаление: «удали 1 сентября», «удали сон вчера», «убери день 3 сентября»
+  if (/^(удали|удалить|убери|убрать|сотри|стереть|очисти)/.test(low)) {
+    отправить(chat, удалитьПоТексту(low));
+    return;
+  }
+
   const r = разобрать(text);
   if (!r) {
     отправить(chat,
@@ -160,6 +166,77 @@ function разобрать(text) {
   if (сон === null && день === null) return null;
 
   return { дата: дата.дата, сон: сон, день: день };
+}
+
+
+// «удали сон 1 сентября» / «удали 1 сентября» / «удали день вчера» / «удали сегодня»
+function удалитьПоТексту(low) {
+  let s = ' ' + low.replace(/ё/g, 'е') + ' ';
+  s = s.replace(/^\s*(удалить|удали|убрать|убери|стереть|сотри|очисти)/, ' ');
+
+  // Сначала вырезаем дату, иначе «сегодня» прочитается как «дня»
+  const d = вытащитьДату(s);
+  const дата = d.дата;
+  const остаток = d.остаток;
+
+  const хочетСон = /(сон|ночь|спал)/.test(остаток);
+  const хочетДень = /(день|дня|днем|продуктивност)/.test(остаток);
+
+  // Если ни сон, ни день не названы — удаляем весь день целиком
+  if (!хочетСон && !хочетДень) {
+    if (!естьЗапись(дата)) return 'За ' + датаСловами(дата) + ' и так ничего не записано.';
+    очистить(дата);
+    return 'Стёр весь день: ' + датаСловами(дата) + '.';
+  }
+
+  if (!естьЗапись(дата)) return 'За ' + датаСловами(дата) + ' и так ничего не записано.';
+
+  стеретьПоле(дата, хочетСон, хочетДень);
+
+  const что = [];
+  if (хочетСон) что.push('сон');
+  if (хочетДень) что.push('день');
+  return 'Стёр ' + что.join(' и ') + ' за ' + датаСловами(дата) + '.';
+}
+
+
+function естьЗапись(дата) {
+  const key = ключДаты(дата);
+  const все = всеЗаписи();
+  for (let i = 0; i < все.length; i++) {
+    if (все[i].дата === key) return true;
+  }
+  return false;
+}
+
+
+function стеретьПоле(дата, сон, день) {
+  const sh = лист();
+  const key = ключДаты(дата);
+  const last = sh.getLastRow();
+  if (last < 2) return;
+  const даты = sh.getRange(2, 1, last - 1, 1).getValues();
+
+  for (let i = 0; i < даты.length; i++) {
+    const v = даты[i][0];
+    const k = (v instanceof Date) ? ключДаты(v) : String(v).trim();
+    if (k !== key) continue;
+
+    const строка = i + 2;
+    if (сон) sh.getRange(строка, 2).clearContent();
+    if (день) sh.getRange(строка, 3).clearContent();
+
+    // Если после удаления в строке пусто — убираем её целиком
+    const остались = sh.getRange(строка, 2, 1, 2).getValues()[0];
+    if (!остались[0] && !остались[1]) {
+      sh.deleteRow(строка);
+    } else {
+      sh.getRange(строка, 4).setValue(
+        Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd.MM HH:mm')
+      );
+    }
+    return;
+  }
 }
 
 
@@ -370,6 +447,11 @@ function справка() {
     '• вчера сон 6 день 5\n' +
     '• 3 сентября сон 9 день 8\n' +
     '• 8 7   (первое — сон, второе — день)\n\n' +
+    'Исправить — просто напиши заново, старое значение заменится.\n\n' +
+    'Удалить:\n' +
+    '• удали 1 сентября   (весь день)\n' +
+    '• удали сон вчера    (только сон)\n' +
+    '• удали день сегодня (только день)\n\n' +
     'Диктовать можно микрофоном на клавиатуре — телефон напишет текстом сам.\n\n' +
     'Команды:\n' +
     '/итог — средние за месяц и связь сна с днём\n' +
@@ -390,12 +472,74 @@ function отправить(chat, text) {
 // После развёртывания как веб-приложения этот адрес отдаёт JSON,
 // который читает страница sleep-tracker.html
 function doGet() {
+  return json({ ok: true, data: собратьДляСтраницы() });
+}
+
+
+// Сюда страница присылает то, что ты натыкал руками на компьютере,
+// чтобы таблица и страница не разъезжались.
+function doPost(e) {
+  try {
+    const body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+    const дата = String(body.date || '');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(дата)) {
+      return json({ ok: false, error: 'нужна дата в виде 2026-09-03' });
+    }
+
+    const части = дата.split('-');
+    const d = new Date(Number(части[0]), Number(части[1]) - 1, Number(части[2]));
+
+    const сон = чистое(body.sleep);
+    const день = чистое(body.day);
+
+    if (body.clear === true) {
+      очистить(d);
+    } else {
+      if (сон === null && день === null) {
+        return json({ ok: false, error: 'нет значений от 1 до 10' });
+      }
+      записать(d, сон, день);
+    }
+    return json({ ok: true, data: собратьДляСтраницы() });
+  } catch (err) {
+    return json({ ok: false, error: err.message });
+  }
+}
+
+
+function чистое(v) {
+  const n = Number(v);
+  if (!(n >= 1 && n <= 10)) return null;
+  return Math.round(n);
+}
+
+
+function собратьДляСтраницы() {
   const данные = {};
   всеЗаписи().forEach(function (e) {
     данные[e.дата] = { sleep: e.сон || 0, day: e.день || 0 };
   });
+  return данные;
+}
+
+
+function очистить(дата) {
+  const sh = лист();
+  const key = ключДаты(дата);
+  const last = sh.getLastRow();
+  if (last < 2) return;
+  const даты = sh.getRange(2, 1, last - 1, 1).getValues();
+  for (let i = 0; i < даты.length; i++) {
+    const v = даты[i][0];
+    const k = (v instanceof Date) ? ключДаты(v) : String(v).trim();
+    if (k === key) { sh.deleteRow(i + 2); return; }
+  }
+}
+
+
+function json(obj) {
   return ContentService
-    .createTextOutput(JSON.stringify({ ok: true, data: данные }))
+    .createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
 }
 

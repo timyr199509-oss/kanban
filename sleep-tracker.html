@@ -416,7 +416,7 @@ body {
     </div>
     <div class="tools-row" style="margin-top:12px">
       <button class="tool-btn" id="btnLink">Подключить таблицу</button>
-      <button class="tool-btn" id="btnPull">Обновить</button>
+      <button class="tool-btn" id="btnPull">Обновить сейчас</button>
     </div>
   </div>
 
@@ -656,10 +656,12 @@ body {
       var i = +p[0], kind = p[1], v = +p[2];
       if (!state[i]) state[i] = {};
       state[i][kind] = state[i][kind] === v ? 0 : v;
-      if (!state[i].sleep && !state[i].day) delete state[i];
+      var пусто = !state[i].sleep && !state[i].day;
+      if (пусто) delete state[i];
       save();
       refreshDay(i);
       refreshStats();
+      push(i, пусто);
       return;
     }
 
@@ -670,6 +672,7 @@ body {
       save();
       refreshDay(ci);
       refreshStats();
+      push(ci, true);
       return;
     }
 
@@ -744,9 +747,20 @@ body {
     syncState.className = 'sync-state' + (ok ? ' on' : '');
   }
 
+  var lastPull = 0;
+
+  function время(ts) {
+    var d = new Date(ts);
+    return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+  }
+
   function paintSync() {
-    if (sheetUrl) showSync('Таблица подключена. Что записал бот — видно здесь.', true);
-    else showSync('Таблица не подключена — данные только в этом браузере.', false);
+    if (!sheetUrl) {
+      showSync('Таблица не подключена — данные только в этом браузере.', false);
+      return;
+    }
+    showSync('Таблица подключена, обновляется сама' +
+      (lastPull ? '. Последний раз в <b>' + время(lastPull) + '</b>' : '') + '.', true);
   }
 
   function pull(silent) {
@@ -772,8 +786,15 @@ body {
           if (rec.sleep || rec.day) { state[d] = rec; got++; }
         }
         save();
+        var opened = daysEl.querySelector('.day.open');
+        var openId = opened ? opened.getAttribute('data-d') : null;
         buildDays();
+        if (openId) {
+          var back = daysEl.querySelector('[data-d="' + openId + '"]');
+          if (back) back.classList.add('open');
+        }
         refreshStats();
+        lastPull = Date.now();
         paintSync();
         if (!silent) toast('Загружено дней: ' + got + '.');
       })
@@ -782,6 +803,56 @@ body {
         if (!silent) toast('Не получилось: ' + err.message);
       });
   }
+
+  /* Отправляем в таблицу то, что натыкали руками — чтобы цифры не разъезжались */
+  function push(day, clear) {
+    if (!sheetUrl) return;
+    var dd = ('0' + day).slice(-2);
+    var body = {
+      date: YEAR + '-' + String(MONTH).padStart(2, '0') + '-' + dd,
+      clear: !!clear,
+      sleep: (state[day] && state[day].sleep) || 0,
+      day: (state[day] && state[day].day) || 0
+    };
+    fetch(sheetUrl, {
+      method: 'POST',
+      redirect: 'follow',
+      // text/plain — чтобы браузер не слал предварительный запрос,
+      // который Apps Script не умеет обрабатывать
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(body)
+    })
+      .then(function (r) { return r.text(); })
+      .then(function (text) {
+        var res;
+        try { res = JSON.parse(text); }
+        catch (e) {
+          throw new Error('таблица ответила не по делу — скорее всего, ' +
+            'после правки кода нужно заново развернуть веб-приложение');
+        }
+        if (!res.ok) throw new Error(res.error || 'таблица не приняла запись');
+        lastPull = Date.now();
+        paintSync();
+      })
+      .catch(function (err) {
+        showSync('В таблицу не ушло: ' + err.message +
+          '. Здесь сохранено — нажми «Обновить сейчас», когда починится.', false);
+      });
+  }
+
+  /* Автообновление: при возврате на вкладку и раз в минуту, пока она открыта */
+  function autoPull(проверятьВидимость) {
+    if (!sheetUrl) return;
+    if (проверятьВидимость && document.hidden) return;
+    if (Date.now() - lastPull < 15000) return;
+    pull(true);
+  }
+
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) autoPull(false);
+  });
+  window.addEventListener('focus', function () { autoPull(false); });
+  setInterval(function () { autoPull(true); }, 60000);
 
   document.getElementById('btnLink').addEventListener('click', function () {
     var v = window.prompt(
