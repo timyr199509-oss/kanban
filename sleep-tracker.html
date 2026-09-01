@@ -775,7 +775,10 @@ body {
       .then(function (res) {
         if (!res || !res.ok || !res.data) throw new Error('таблица вернула не то, что нужно');
         var prefix = YEAR + '-' + String(MONTH).padStart(2, '0') + '-';
-        var got = 0;
+
+        // Таблица — источник истины: собираем месяц заново, а не дописываем.
+        // Иначе удалённое в таблице продолжало бы висеть на странице.
+        var свежее = {}, got = 0;
         for (var key in res.data) {
           if (key.indexOf(prefix) !== 0) continue;
           var d = parseInt(key.slice(8), 10);
@@ -783,8 +786,9 @@ body {
           var e = res.data[key], rec = {};
           if (e.sleep >= 1 && e.sleep <= 10) rec.sleep = +e.sleep;
           if (e.day >= 1 && e.day <= 10) rec.day = +e.day;
-          if (rec.sleep || rec.day) { state[d] = rec; got++; }
+          if (rec.sleep || rec.day) { свежее[d] = rec; got++; }
         }
+        state = свежее;
         save();
         var opened = daysEl.querySelector('.day.open');
         var openId = opened ? opened.getAttribute('data-d') : null;
