@@ -740,6 +740,13 @@ body {
   var sheetUrl = '';
   try { sheetUrl = localStorage.getItem(URLKEY) || ''; } catch (e) {}
 
+  // Секрет живёт прямо в ссылке (…/exec?k=…). Достаём его,
+  // чтобы отправлять и в адресе, и в теле запроса.
+  function секрет() {
+    var m = sheetUrl.match(/[?&]k=([^&]+)/);
+    return m ? decodeURIComponent(m[1]) : '';
+  }
+
   var syncState = document.getElementById('syncState');
 
   function showSync(text, ok) {
@@ -816,7 +823,8 @@ body {
       date: YEAR + '-' + String(MONTH).padStart(2, '0') + '-' + dd,
       clear: !!clear,
       sleep: (state[day] && state[day].sleep) || 0,
-      day: (state[day] && state[day].day) || 0
+      day: (state[day] && state[day].day) || 0,
+      k: секрет()
     };
     fetch(sheetUrl, {
       method: 'POST',
@@ -874,6 +882,10 @@ body {
     }
     if (v.indexOf('https://script.google.com/') !== 0) {
       toast('Это не похоже на ссылку Apps Script.');
+      return;
+    }
+    if (v.indexOf('k=') === -1) {
+      toast('В ссылке нет секретного слова — нужен хвост ?k=…');
       return;
     }
     sheetUrl = v;

@@ -4,6 +4,10 @@ const TOKEN = 'ВСТАВЬ_СЮДА_ТОКЕН';
 
 // Как называется лист в таблице (создастся сам, если его нет):
 const ЛИСТ = 'СОН И ДЕНЬ';
+
+// Секретное слово. Без него по ссылке /exec нельзя ни прочитать, ни записать.
+// Менять не обязательно; если поменяешь — заново подключи таблицу в трекере.
+const СЕКРЕТ = '74gqqa56nssr1fhz6gu4';
 // ===================================
 
 
@@ -471,7 +475,8 @@ function отправить(chat, text) {
 // ──────────────── ДАННЫЕ ДЛЯ СТРАНИЦЫ-ТРЕКЕРА ────────────────
 // После развёртывания как веб-приложения этот адрес отдаёт JSON,
 // который читает страница sleep-tracker.html
-function doGet() {
+function doGet(e) {
+  if (!пропуск(e, null)) return json({ ok: false, error: 'нет доступа' });
   return json({ ok: true, data: собратьДляСтраницы() });
 }
 
@@ -481,6 +486,7 @@ function doGet() {
 function doPost(e) {
   try {
     const body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+    if (!пропуск(e, body)) return json({ ok: false, error: 'нет доступа' });
     const дата = String(body.date || '');
     if (!/^\d{4}-\d{2}-\d{2}$/.test(дата)) {
       return json({ ok: false, error: 'нужна дата в виде 2026-09-03' });
@@ -504,6 +510,16 @@ function doPost(e) {
   } catch (err) {
     return json({ ok: false, error: err.message });
   }
+}
+
+
+// Секрет ищем и в адресе (?k=…), и в теле запроса — при переадресации
+// у Google параметры адреса иногда теряются.
+function пропуск(e, body) {
+  if (!СЕКРЕТ) return true;
+  const изАдреса = (e && e.parameter && e.parameter.k) || '';
+  const изТела = (body && body.k) || '';
+  return изАдреса === СЕКРЕТ || изТела === СЕКРЕТ;
 }
 
 
