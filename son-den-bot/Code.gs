@@ -93,6 +93,12 @@ function обработать(update) {
     return;
   }
 
+  // Заметка: «заметка: не спал из-за Макара», «коммент вчера: тяжёлая отгрузка»
+  if (/^(заметка|заметку|коммент\w*|комментарий|причина|почему)/i.test(low)) {
+    отправить(chat, заметкаПоТексту(text));
+    return;
+  }
+
   const r = разобрать(text);
   if (!r) {
     отправить(chat,
@@ -204,6 +210,44 @@ function удалитьПоТексту(low) {
 }
 
 
+// «заметка: не спал из-за Макара» / «коммент вчера: тяжёлая отгрузка»
+// / «заметка 3 сентября: перебрал с кофе»
+function заметкаПоТексту(text) {
+  // Отрезаем слово-команду, сохраняя исходный регистр остального текста
+  let s = text.replace(/^\s*(заметку|заметка|комментарий|коммент\w*|причина|почему)\s*/i, '');
+
+  // Дату ищем в служебной копии, чтобы не портить текст самой заметки
+  const служебная = ' ' + s.toLowerCase().replace(/ё/g, 'е') + ' ';
+  const d = вытащитьДату(служебная);
+  const дата = d.дата;
+
+  // Убираем из текста то, что было распознано как дата
+  s = s.replace(/^\s*(позавчера|вчера|сегодня)\s*/i, '');
+  s = s.replace(/^\s*\d{1,2}\s+[а-яё]+\s*/i, '');
+  s = s.replace(/^\s*\d{1,2}[.\/]\d{1,2}\s*/, '');
+  s = s.replace(/^\s*[:—–-]\s*/, '').trim();
+
+  if (!s) {
+    const было = заметкаЗа(дата);
+    if (!было) return 'Пустая заметка. Напиши так: «заметка вчера: не спал из-за Макара».';
+    return 'Заметка за ' + датаСловами(дата) + ':\n' + было;
+  }
+
+  записать(дата, null, null, s);
+  return 'Записал заметку за ' + датаСловами(дата) + ':\n' + s;
+}
+
+
+function заметкаЗа(дата) {
+  const key = ключДаты(дата);
+  const все = всеЗаписи();
+  for (let i = 0; i < все.length; i++) {
+    if (все[i].дата === key) return все[i].заметка;
+  }
+  return '';
+}
+
+
 function естьЗапись(дата) {
   const key = ключДаты(дата);
   const все = всеЗаписи();
@@ -230,7 +274,7 @@ function стеретьПоле(дата, сон, день) {
     if (сон) sh.getRange(строка, 2).clearContent();
     if (день) sh.getRange(строка, 3).clearContent();
 
-    // Если после удаления в строке пусто — убираем её целиком
+    // Если после удаления оценок не осталось — убираем строку вместе с заметкой
     const остались = sh.getRange(строка, 2, 1, 2).getValues()[0];
     if (!остались[0] && !остались[1]) {
       sh.deleteRow(строка);
@@ -307,11 +351,19 @@ function лист() {
   let sh = ss.getSheetByName(ЛИСТ);
   if (!sh) {
     sh = ss.insertSheet(ЛИСТ);
-    sh.getRange(1, 1, 1, 4).setValues([['Дата', 'Сон', 'День', 'Обновлено']]);
-    sh.getRange(1, 1, 1, 4).setFontWeight('bold');
+    sh.getRange(1, 1, 1, 5).setValues([['Дата', 'Сон', 'День', 'Обновлено', 'Заметка']]);
+    sh.getRange(1, 1, 1, 5).setFontWeight('bold');
     sh.setFrozenRows(1);
     sh.setColumnWidth(1, 110);
-    sh.setColumnWidth(4, 150);
+    sh.setColumnWidth(4, 130);
+    sh.setColumnWidth(5, 420);
+    sh.getRange('E:E').setWrap(true);
+  }
+  // Лист мог остаться от прежней версии, без колонки заметок
+  if (sh.getLastColumn() < 5 || sh.getRange(1, 5).getValue() !== 'Заметка') {
+    sh.getRange(1, 5).setValue('Заметка').setFontWeight('bold');
+    sh.setColumnWidth(5, 420);
+    sh.getRange('E:E').setWrap(true);
   }
   return sh;
 }
@@ -322,27 +374,31 @@ function ключДаты(d) {
 }
 
 
-function записать(дата, сон, день) {
+function найтиСтроку(sh, key) {
+  const last = sh.getLastRow();
+  if (last < 2) return 0;
+  const даты = sh.getRange(2, 1, last - 1, 1).getValues();
+  for (let i = 0; i < даты.length; i++) {
+    const v = даты[i][0];
+    const k = (v instanceof Date) ? ключДаты(v) : String(v).trim();
+    if (k === key) return i + 2;
+  }
+  return 0;
+}
+
+
+function записать(дата, сон, день, заметка) {
   const sh = лист();
   const key = ключДаты(дата);
-  const last = sh.getLastRow();
-
-  let строка = 0;
-  if (last > 1) {
-    const даты = sh.getRange(2, 1, last - 1, 1).getValues();
-    for (let i = 0; i < даты.length; i++) {
-      const v = даты[i][0];
-      const k = (v instanceof Date) ? ключДаты(v) : String(v).trim();
-      if (k === key) { строка = i + 2; break; }
-    }
-  }
+  let строка = найтиСтроку(sh, key);
 
   if (!строка) {
-    строка = last + 1;
+    строка = sh.getLastRow() + 1;
     sh.getRange(строка, 1).setValue(key);
   }
-  if (сон !== null) sh.getRange(строка, 2).setValue(сон);
-  if (день !== null) sh.getRange(строка, 3).setValue(день);
+  if (сон !== null && сон !== undefined) sh.getRange(строка, 2).setValue(сон);
+  if (день !== null && день !== undefined) sh.getRange(строка, 3).setValue(день);
+  if (заметка !== null && заметка !== undefined) sh.getRange(строка, 5).setValue(заметка);
   sh.getRange(строка, 4).setValue(
     Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd.MM HH:mm')
   );
@@ -353,7 +409,7 @@ function всеЗаписи() {
   const sh = лист();
   const last = sh.getLastRow();
   if (last < 2) return [];
-  const values = sh.getRange(2, 1, last - 1, 3).getValues();
+  const values = sh.getRange(2, 1, last - 1, 5).getValues();
   const out = [];
   for (let i = 0; i < values.length; i++) {
     const v = values[i][0];
@@ -361,7 +417,8 @@ function всеЗаписи() {
     out.push({
       дата: (v instanceof Date) ? ключДаты(v) : String(v).trim(),
       сон: Number(values[i][1]) || null,
-      день: Number(values[i][2]) || null
+      день: Number(values[i][2]) || null,
+      заметка: String(values[i][4] || '').trim()
     });
   }
   return out;
@@ -385,7 +442,9 @@ function деньСтрокой(d) {
     if (все[i].дата === key) {
       const с = все[i].сон === null ? 'не записан' : все[i].сон;
       const п = все[i].день === null ? 'не записан' : все[i].день;
-      return датаСловами(d) + ': сон — ' + с + ', день — ' + п + '.';
+      let out = датаСловами(d) + ': сон — ' + с + ', день — ' + п + '.';
+      if (все[i].заметка) out += '\nЗаметка: ' + все[i].заметка;
+      return out;
     }
   }
   return датаСловами(d) + ': пока ничего не записано.';
@@ -452,6 +511,11 @@ function справка() {
     '• 3 сентября сон 9 день 8\n' +
     '• 8 7   (первое — сон, второе — день)\n\n' +
     'Исправить — просто напиши заново, старое значение заменится.\n\n' +
+    'Заметка — почему день был такой:\n' +
+    '• заметка: не спал из-за Макара\n' +
+    '• заметка вчера: тяжёлая отгрузка\n' +
+    '• заметка 3 сентября: перебрал с кофе\n' +
+    '(«заметка вчера» без текста — покажет, что записано)\n\n' +
     'Удалить:\n' +
     '• удали 1 сентября   (весь день)\n' +
     '• удали сон вчера    (только сон)\n' +
@@ -497,14 +561,15 @@ function doPost(e) {
 
     const сон = чистое(body.sleep);
     const день = чистое(body.day);
+    const заметка = (typeof body.note === 'string') ? body.note.slice(0, 1000) : null;
 
     if (body.clear === true) {
       очистить(d);
     } else {
-      if (сон === null && день === null) {
-        return json({ ok: false, error: 'нет значений от 1 до 10' });
+      if (сон === null && день === null && заметка === null) {
+        return json({ ok: false, error: 'нет ни оценок, ни заметки' });
       }
-      записать(d, сон, день);
+      записать(d, сон, день, заметка);
     }
     return json({ ok: true, data: собратьДляСтраницы() });
   } catch (err) {
@@ -533,7 +598,7 @@ function чистое(v) {
 function собратьДляСтраницы() {
   const данные = {};
   всеЗаписи().forEach(function (e) {
-    данные[e.дата] = { sleep: e.сон || 0, day: e.день || 0 };
+    данные[e.дата] = { sleep: e.сон || 0, day: e.день || 0, note: e.заметка || '' };
   });
   return данные;
 }

@@ -281,6 +281,45 @@ body {
   font-weight: 700;
 }
 
+.note-wrap { margin-top: 14px; }
+.note-label {
+  font-size: 12px;
+  color: var(--muted2);
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+.note-label b { color: var(--text); font-weight: 600; }
+.note-input {
+  width: 100%;
+  min-height: 62px;
+  background: var(--card2);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 11px 12px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.45;
+  resize: vertical;
+  transition: border-color 160ms ease;
+  -webkit-appearance: none;
+}
+.note-input::placeholder { color: var(--muted); }
+.note-input:focus { outline: none; border-color: var(--border2); }
+.note-input.saved { border-color: #34C759; }
+
+.day-note-badge {
+  font-size: 11.5px;
+  color: var(--muted2);
+  line-height: 1.4;
+  padding: 0 14px 12px;
+  margin-top: -4px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
 .pick-clear {
   margin-top: 10px;
   width: 100%;
@@ -492,14 +531,38 @@ body {
             '</div>' +
             '<div class="day-chev">›</div>' +
           '</div>' +
+          noteBadge(i) +
           '<div class="day-body"><div class="day-body-inner"><div class="day-body-pad">' +
             group(i, 'sleep', 'Сон', 'как выспался') +
             group(i, 'day', 'День', 'как прошёл рабочий день') +
+            noteBox(i) +
             '<button class="pick-clear" data-clear="' + i + '">Очистить день</button>' +
           '</div></div></div>' +
         '</div>';
     }
     daysEl.innerHTML = html;
+  }
+
+  function экранировать(s) {
+    return String(s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // Короткий след заметки прямо в списке, чтобы не открывать каждый день
+  function noteBadge(i) {
+    var n = (state[i] && state[i].note) || '';
+    if (!n) return '';
+    return '<div class="day-note-badge" data-badge="' + i + '">' + экранировать(n) + '</div>';
+  }
+
+  function noteBox(i) {
+    var n = (state[i] && state[i].note) || '';
+    return '<div class="note-wrap">' +
+      '<div class="note-label"><b>Почему так</b> — прочитаешь в конце месяца</div>' +
+      '<textarea class="note-input" data-note="' + i + '" rows="2" maxlength="500" ' +
+      'placeholder="Не спал из-за Макара. Тяжёлая отгрузка. Перебрал с кофе.">' +
+      экранировать(n) + '</textarea></div>';
   }
 
   function mark(i, kind) {
@@ -656,7 +719,7 @@ body {
       var i = +p[0], kind = p[1], v = +p[2];
       if (!state[i]) state[i] = {};
       state[i][kind] = state[i][kind] === v ? 0 : v;
-      var пусто = !state[i].sleep && !state[i].day;
+      var пусто = !state[i].sleep && !state[i].day && !state[i].note;
       if (пусто) delete state[i];
       save();
       refreshDay(i);
@@ -676,6 +739,9 @@ body {
       return;
     }
 
+    // Клик по полю заметки не должен схлопывать карточку
+    if (e.target.closest('[data-note]')) return;
+
     var head = e.target.closest('[data-toggle]');
     if (head) {
       var card = head.parentElement;
@@ -685,6 +751,61 @@ body {
       if (!wasOpen) card.classList.add('open');
     }
   });
+
+  /* ── Заметки: сохраняем через паузу, а не на каждую букву ── */
+  var noteTimers = {};
+
+  daysEl.addEventListener('input', function (e) {
+    var ta = e.target.closest('[data-note]');
+    if (!ta) return;
+    var i = +ta.getAttribute('data-note');
+    ta.classList.remove('saved');
+
+    clearTimeout(noteTimers[i]);
+    noteTimers[i] = setTimeout(function () { saveNote(i, ta); }, 700);
+  });
+
+  // Ушёл с поля — сохраняем сразу, не дожидаясь паузы
+  daysEl.addEventListener('focusout', function (e) {
+    var ta = e.target.closest('[data-note]');
+    if (!ta) return;
+    var i = +ta.getAttribute('data-note');
+    clearTimeout(noteTimers[i]);
+    saveNote(i, ta);
+  });
+
+  function saveNote(i, ta) {
+    var text = ta.value.trim().slice(0, 500);
+    var было = (state[i] && state[i].note) || '';
+    if (text === было) return;
+
+    if (!state[i]) state[i] = {};
+    if (text) state[i].note = text;
+    else delete state[i].note;
+
+    if (!state[i].sleep && !state[i].day && !state[i].note) delete state[i];
+    save();
+    refreshBadge(i);
+    ta.classList.add('saved');
+    push(i, false);
+  }
+
+  function refreshBadge(i) {
+    var card = daysEl.querySelector('[data-d="' + i + '"]');
+    if (!card) return;
+    var badge = card.querySelector('[data-badge="' + i + '"]');
+    var n = (state[i] && state[i].note) || '';
+    if (n && badge) { badge.textContent = n; return; }
+    if (n && !badge) {
+      var el = document.createElement('div');
+      el.className = 'day-note-badge';
+      el.setAttribute('data-badge', String(i));
+      el.textContent = n;
+      card.querySelector('.day-head').insertAdjacentElement('afterend', el);
+      return;
+    }
+    if (!n && badge) badge.remove();
+  }
 
   /* ── Перенос данных ── */
   var toastEl = document.getElementById('toast'), toastT;
@@ -727,7 +848,8 @@ body {
       var rec = {};
       if (e.sleep >= 1 && e.sleep <= 10) rec.sleep = +e.sleep;
       if (e.day >= 1 && e.day <= 10) rec.day = +e.day;
-      if (rec.sleep || rec.day) { state[n] = rec; added++; }
+      if (typeof e.note === 'string' && e.note.trim()) rec.note = e.note.trim();
+      if (rec.sleep || rec.day || rec.note) { state[n] = rec; added++; }
     }
     save();
     buildDays();
@@ -793,7 +915,8 @@ body {
           var e = res.data[key], rec = {};
           if (e.sleep >= 1 && e.sleep <= 10) rec.sleep = +e.sleep;
           if (e.day >= 1 && e.day <= 10) rec.day = +e.day;
-          if (rec.sleep || rec.day) { свежее[d] = rec; got++; }
+          if (typeof e.note === 'string' && e.note.trim()) rec.note = e.note.trim();
+          if (rec.sleep || rec.day || rec.note) { свежее[d] = rec; got++; }
         }
         state = свежее;
         save();
@@ -824,6 +947,7 @@ body {
       clear: !!clear,
       sleep: (state[day] && state[day].sleep) || 0,
       day: (state[day] && state[day].day) || 0,
+      note: (state[day] && state[day].note) || '',
       k: секрет()
     };
     fetch(sheetUrl, {
