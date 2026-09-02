@@ -902,7 +902,13 @@ body {
         return r.json();
       })
       .then(function (res) {
-        if (!res || !res.ok || !res.data) throw new Error('таблица вернула не то, что нужно');
+        if (res && res.ok === false && /доступ/.test(res.error || '')) {
+          throw new Error('в ссылке нет секретного слова — нажми «Подключить таблицу» ' +
+            'и вставь ссылку с хвостом ?k=…');
+        }
+        if (!res || !res.ok || !res.data) {
+          throw new Error((res && res.error) || 'таблица вернула не то, что нужно');
+        }
         var prefix = YEAR + '-' + String(MONTH).padStart(2, '0') + '-';
 
         // Таблица — источник истины: собираем месяц заново, а не дописываем.
